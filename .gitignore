@@ -16,3 +16,4 @@ scratch/
 .hypothesis
 .cache
 .eggs
+.artifacts
