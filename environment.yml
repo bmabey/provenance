@@ -3,3 +3,4 @@ dependencies:
 - python==3.5
 - pip:
   - versioneer
+  - twine
