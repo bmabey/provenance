@@ -1,5 +1,7 @@
 language: python
 sudo: false
+addons:
+  postgresql: "9.5.4"
 
 python:
   # We don't actually use the Travis Python, but this keeps it organized. For now only python 3.5 is supported.
