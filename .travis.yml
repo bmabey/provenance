@@ -2,6 +2,10 @@ language: python
 sudo: false
 addons:
   postgresql: "9.5.4"
+before_script:
+  - psql -c 'create database test_provenance;' -U postgres
+env:
+- DB=postgresql://postgres@localhost/test_provenance
 
 python:
   # We don't actually use the Travis Python, but this keeps it organized. For now only python 3.5 is supported.
