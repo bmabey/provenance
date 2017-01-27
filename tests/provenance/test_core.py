@@ -1,13 +1,16 @@
 import toolz as t
 import pytest
+import tempfile
+import pandas as pd
+import os
 
 import provenance as p
-import provenance.blobstores as bs
 import provenance.core as pc
 import provenance.repos as r
 import provenance.utils as u
 from provenance.hashing import hash
 from conftest import artifact_record
+import conftest as c
 
 def test_integration_test(repo):
     @p.provenance(version=0, name='initial_data')
@@ -69,6 +72,53 @@ def test_integration_test(repo):
                             artifact.inputs['kargs']['inc_b'].artifact,
                             inc_a_artifact,
                             artifact]
+
+
+def test_archived_file_used_in_input(dbdiskrepo):
+    repo = dbdiskrepo
+    assert p.get_default_repo() is not None
+    tmp_dir = tempfile.mkdtemp('prov_integration_archive_test')
+    data_filename = os.path.join(tmp_dir, 'data.csv')
+    pd.DataFrame({'a': [0, 1, 2], 'b': [10, 11, 12]}).\
+        to_csv(data_filename, index=False)
+
+    assert os.path.exists(data_filename)
+    archived_file = p.archive_file(data_filename, delete_original=True,
+                                   custom_fields={'foo': 'bar'})
+    assert not os.path.exists(data_filename)
+    assert archived_file.artifact.custom_fields == {'foo': 'bar'}
+
+    @p.provenance()
+    def add_col_c_ret_df(filename):
+        df = pd.read_csv(str(filename))
+        df['c'] = df['a'] + df['b']
+        return df
+
+    ret = add_col_c_ret_df(archived_file)
+    assert list(ret['c'].values) == [10, 12, 14]
+
+    assert ret.artifact.inputs['kargs']['filename'] == archived_file
+
+
+def test_output_is_archived_as_file(dbdiskrepo):
+    repo = dbdiskrepo
+    tmp_dir = tempfile.mkdtemp('prov_integration_archive_test')
+    data_filename = os.path.join(tmp_dir, 'data.csv')
+    pd.DataFrame({'a': [0,1,2], 'b': [10,11,12]}).\
+        to_csv(data_filename, index=False)
+    archived_file = p.archive_file(data_filename, delete_original=True)
+
+    @p.provenance(archive_file=True, delete_original=True)
+    def add_col_c_ret_df(filename):
+        df = pd.read_csv(str(filename))
+        df['c'] = df['a'] + df['b']
+        data_filename = os.path.join(tmp_dir, 'data2.csv')
+        df.to_csv(data_filename, index=False)
+        return data_filename
+
+    ret_file = add_col_c_ret_df(archived_file)
+    ret = pd.read_csv(str(ret_file))
+    assert list(ret['c'].values) == [10, 12, 14]
 
 
 def test_fn_with_merged_defaults_set_with_provenance_decorator(repo):
