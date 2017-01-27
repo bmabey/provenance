@@ -143,6 +143,12 @@ def repo(request, db_session):
         next(disk_store_gen, 'ignore')
 
 
+@pytest.fixture(scope='function', params=['dbrepo-diskstore'])
+def dbdiskrepo(request, db_session):
+    repo_gen = repo(request, db_session)
+    yield next(repo_gen)
+    next(repo_gen, 'ignore')
+
 @pytest.fixture(scope='function',
                 params=['memoryrepo' 'dbrepo-diskstore', 'dbrepo-memorystore'])
 def atomic_repo(request, db_session):

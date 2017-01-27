@@ -14,11 +14,18 @@ def cloudpickle_load(filename, **kargs):
     with open(filename, 'rb') as f:
         return cloudpickle.load(f, **kargs)
 
+
 Serializer = namedtuple('Serializer', 'name, dump, load')
 
-serializers = {'joblib': Serializer('joblib', joblib.dump, joblib.load),
-               'cloudpickle': Serializer('cloudpickle', cloudpickle_dump, cloudpickle_load)}
 
+serializers = {'joblib': Serializer('joblib', joblib.dump, joblib.load),
+               'cloudpickle': Serializer('cloudpickle',
+                                         cloudpickle_dump,
+                                         cloudpickle_load),}
+
+
+def register_serializer(name, dump, load):
+    serializers[name] = Serializer(name, dump, load)
 
 @t.memoize(key=lambda *args: hash(args))
 def partial_serializer(serializer_name, dump_kwargs, load_kwargs):
