@@ -121,6 +121,30 @@ def test_output_is_archived_as_file(dbdiskrepo):
     assert list(ret['c'].values) == [10, 12, 14]
 
 
+def test_archived_file_becoming_loaded_value_while_persisting_artifact_info(dbdiskrepo):
+    tmp_dir = tempfile.mkdtemp('prov_integration_archive_test')
+    repo = dbdiskrepo
+    data_filename = os.path.join(tmp_dir, 'data.csv')
+    pd.DataFrame({'a': [0,1,2], 'b': [10,11,12]}).\
+        to_csv(data_filename, index=False)
+    archived_file = p.archive_file(data_filename, delete_original=True)
+
+    @p.provenance(archive_file=True, delete_original=True)
+    def add_col_c_ret_df(df):
+        df['c'] = df['a'] + df['b']
+        data_filename = os.path.join(tmp_dir, 'data2.csv')
+        df.to_csv(data_filename, index=False)
+        return data_filename
+
+    read_csv = lambda af: pd.read_csv(str(af))
+
+    df = archived_file.transform_value(read_csv)
+    assert df.artifact.id == archived_file.artifact.id
+    ret = add_col_c_ret_df(df).transform_value(read_csv)
+    assert list(ret['c'].values) == [10, 12, 14]
+    ar = ret.artifact
+    assert ar.inputs['kargs']['df'].artifact.id == archived_file.artifact.id
+
 def test_fn_with_merged_defaults_set_with_provenance_decorator(repo):
 
     @p.provenance(merge_defaults=True)
