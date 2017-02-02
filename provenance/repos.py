@@ -1,4 +1,5 @@
 from collections import namedtuple
+import copy
 from datetime import datetime
 import json
 from memoized_property import memoized_property
@@ -96,9 +97,33 @@ def name_set(artifact_set_or_id, name):
     return artifact_set.rename(name).put(repo)
 
 
+def transform_value(proxy_artifact, transformer_fn):
+    """
+    Transforms the underlying value of the `proxy_artifact` with
+    the provided `transformer_fn`. A new ArtifactProxy is returned
+    with the transformed value but with the original artifact.
+
+    The motivation behind this function is to allow archived files
+    to be loaded into memory and passed around while preserving
+    the provenance of the artifact. It could be used in any other
+    situation where you want a different representation of an
+    artifact value while allowing the provenance to be tracked.
+
+    Care should be taken when using this function however because
+    it will prevent you from reproducing exact artifacts from
+    the lineage since this transformer_fn will not be tracked.
+    """
+    transformed = copy.copy(proxy_artifact)
+    transformed.__wrapped__ = transformer_fn(transformed)
+    return transformed
+
+
 class Proxy():
     def value_repr(self):
         return value_repr(self.artifact.value)
+
+    def transform(self, transformer_fn):
+        return transform_value(self, transformer_fn)
 
 
 class ArtifactProxy(wrapt.ObjectProxy, Proxy):
