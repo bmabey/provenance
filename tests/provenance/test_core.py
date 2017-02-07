@@ -143,6 +143,7 @@ def test_archived_file_becoming_loaded_value_while_persisting_artifact_info(dbdi
     ar = ret.artifact
     assert ar.inputs['kargs']['df'].artifact.id == archived_file.artifact.id
 
+
 def test_fn_with_merged_defaults_set_with_provenance_decorator(repo):
 
     @p.provenance(merge_defaults=True)
