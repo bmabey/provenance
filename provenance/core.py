@@ -72,23 +72,23 @@ def fn_info(f):
                            'version': metadata['version'],
                            'input_hash_fn': metadata['input_hash_fn']}
     info['input_process_fn'] = metadata['input_process_fn']
-    info['composite'] = metadata.get('returns_composite', False)
-    info['archive_file'] = metadata.get('archive_file', False)
-    info['custom_fields'] = metadata.get('custom_fields', {})
+    info['composite'] = metadata['returns_composite']
+    info['archive_file'] = metadata['archive_file']
+    info['custom_fields'] = metadata['custom_fields']
 
     if info['composite']:
         if info['archive_file']:
             raise NotImplementedError("Using 'composite' and 'archive_file' is not supported.")
-        info['serializer'] = metadata.get('serializer', {})
-        info['load_kwargs'] = metadata.get('load_kwargs', {})
-        info['dump_kwargs'] = metadata.get('dump_kwargs', {})
+        info['serializer'] = metadata['serializer'] or {}
+        info['load_kwargs'] = metadata['load_kwargs'] or {}
+        info['dump_kwargs'] = metadata['dump_kwargs'] or {}
         valid_serializer = isinstance(info['serializer'], dict)
         for serializer in info['serializer'].values():
             valid_serializer = valid_serializer and serializer in s.serializers
             if not valid_serializer:
                 break
     elif info['archive_file']:
-        serializer = metadata.get('serializer', 'file')
+        serializer = metadata['serializer'] or 'file'
         if serializer != 'file':
             raise ValueError("With 'archive_file' set True the only valid 'serializer' is 'file'")
         if metadata.get('dump_kwargs') is not None:
@@ -96,12 +96,12 @@ def fn_info(f):
         if metadata.get('load_kwargs') is not None:
             raise ValueError("With 'archive_file' set True you may not specify any load_kwargs.")
         info['serializer'] = 'file'
-        info['load_kwargs'] = metadata.get('load_kwargs', {})
-        info['dump_kwargs'] = metadata.get('dump_kwargs',
-                                           {'delete_original': metadata['delete_original_file']})
+        info['load_kwargs'] = metadata['load_kwargs'] or {}
+        info['dump_kwargs'] = (metadata['dump_kwargs']
+                               or {'delete_original': metadata['delete_original_file']})
         valid_serializer = True
     else:
-        info['serializer'] = metadata.get('serializer', DEFAULT_VALUE_SERIALIZER.name)
+        info['serializer'] = metadata.get('serializer', DEFAULT_VALUE_SERIALIZER.name) or DEFAULT_VALUE_SERIALIZER.name
         info['load_kwargs'] = metadata.get('load_kwargs', None)
         info['dump_kwargs'] = metadata.get('dump_kwargs', None)
         valid_serializer = info['serializer'] in s.serializers
@@ -284,7 +284,9 @@ def remove_inputs_fn(to_remove):
 def provenance(version=0, repo=None, name=None, merge_defaults=None,
                ignore=None, input_hash_fn=None, remove=None, input_process_fn=None,
                archive_file=False, delete_original_file=False,
-               _provenance_wrapper=provenance_wrapper, **kargs):
+               returns_composite=False, custom_fields=None,
+               serializer=None, load_kwargs=None, dump_kwargs=None,
+               _provenance_wrapper=provenance_wrapper):
     if ignore and input_hash_fn:
         raise ValueError("You cannot provide both ignore and input_hash_fn")
 
@@ -309,13 +311,20 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
         _name = name
         if _name is None:
             _name = f.__name__
-        f._provenance_metadata = t.merge(kargs,
-                                         {'version': version,
-                                          'name': _name,
-                                          'archive_file': archive_file,
-                                          'delete_original_file': delete_original_file,
-                                          'input_hash_fn': input_hash_fn,
-                                          'input_process_fn': input_process_fn})
+        f._provenance_metadata = {'version': version,
+                                  'name': _name,
+                                  'archive_file': archive_file,
+                                  'delete_original_file': delete_original_file,
+                                  'input_hash_fn': input_hash_fn,
+                                  'input_process_fn': input_process_fn,
+                                  'archive_file': archive_file,
+                                  'delete_original_file': delete_original_file,
+                                  'returns_composite': returns_composite,
+                                  'archive_file': archive_file,
+                                  'custom_fields': custom_fields or {},
+                                  'serializer': serializer,
+                                  'load_kwargs': load_kwargs,
+                                  'dump_kwargs': dump_kwargs}
         f.__merge_defaults__ = merge_defaults
         return _provenance_wrapper(repo, f)
 

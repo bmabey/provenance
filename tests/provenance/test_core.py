@@ -108,7 +108,7 @@ def test_output_is_archived_as_file(dbdiskrepo):
         to_csv(data_filename, index=False)
     archived_file = p.archive_file(data_filename, delete_original=True)
 
-    @p.provenance(archive_file=True, delete_original=True)
+    @p.provenance(archive_file=True, delete_original_file=True)
     def add_col_c_ret_df(filename):
         df = pd.read_csv(str(filename))
         df['c'] = df['a'] + df['b']
@@ -129,7 +129,7 @@ def test_archived_file_becoming_loaded_value_while_persisting_artifact_info(dbdi
         to_csv(data_filename, index=False)
     archived_file = p.archive_file(data_filename, delete_original=True)
 
-    @p.provenance(archive_file=True, delete_original=True)
+    @p.provenance(archive_file=True, delete_original_file=True)
     def add_col_c_ret_df(df):
         df['c'] = df['a'] + df['b']
         data_filename = os.path.join(tmp_dir, 'data2.csv')
