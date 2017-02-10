@@ -158,6 +158,14 @@ def _base_fn(f):
     else:
         return f
 
+
+_EXT_MAPPINGS = {'mpeg': 'mpg',
+                 'jpeg': 'jpg'}
+def _extract_extension(filename):
+    ext = os.path.splitext(filename)[1].lower().strip()[1:]
+    return '.' + _EXT_MAPPINGS.get(ext, ext)
+
+
 @t.curry
 def provenance_wrapper(repo, f):
     base_fn = _base_fn(f)
@@ -233,7 +241,7 @@ def provenance_wrapper(repo, f):
                     raise FileNotFoundError("Unable to archive file, {}, because it doesn't exist!".format(filename))
                 id = file_hash(value)
                 if func_info['preserve_file_ext']:
-                    extension = os.path.splitext(filename)[1]
+                    extension = _extract_extension(filename)
                     id += extension
                 # TODO: figure out best place to put the hash_name config and use in both cases
                 #id = file_hash(value, hash_name=r.hash_name)
