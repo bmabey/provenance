@@ -163,7 +163,10 @@ _EXT_MAPPINGS = {'mpeg': 'mpg',
                  'jpeg': 'jpg'}
 def _extract_extension(filename):
     ext = os.path.splitext(filename)[1].lower().strip()[1:]
-    return '.' + _EXT_MAPPINGS.get(ext, ext)
+    if len(ext) > 0:
+        return '.' + _EXT_MAPPINGS.get(ext, ext)
+    else:
+        return ext
 
 
 @t.curry
