@@ -75,6 +75,7 @@ def fn_info(f):
     info['composite'] = metadata['returns_composite']
     info['archive_file'] = metadata['archive_file']
     info['custom_fields'] = metadata['custom_fields']
+    info['preserve_file_ext'] = metadata['preserve_file_ext']
 
     if info['composite']:
         if info['archive_file']:
@@ -230,8 +231,10 @@ def provenance_wrapper(repo, f):
                     filename = str(value)
                 if not os.path.exists(filename):
                     raise FileNotFoundError("Unable to archive file, {}, because it doesn't exist!".format(filename))
-                extension = os.path.splitext(filename)[1]
-                id = file_hash(value) + extension
+                id = file_hash(value)
+                if func_info['preserve_file_ext']:
+                    extension = os.path.splitext(filename)[1]
+                    id += extension
                 # TODO: figure out best place to put the hash_name config and use in both cases
                 #id = file_hash(value, hash_name=r.hash_name)
                 value = ArchivedFile(id, filename, in_repo=False)
@@ -283,7 +286,7 @@ def remove_inputs_fn(to_remove):
 
 def provenance(version=0, repo=None, name=None, merge_defaults=None,
                ignore=None, input_hash_fn=None, remove=None, input_process_fn=None,
-               archive_file=False, delete_original_file=False,
+               archive_file=False, delete_original_file=False, preserve_file_ext=False,
                returns_composite=False, custom_fields=None,
                serializer=None, load_kwargs=None, dump_kwargs=None,
                _provenance_wrapper=provenance_wrapper):
@@ -319,6 +322,7 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
                                   'input_process_fn': input_process_fn,
                                   'archive_file': archive_file,
                                   'delete_original_file': delete_original_file,
+                                  'preserve_file_ext': preserve_file_ext,
                                   'returns_composite': returns_composite,
                                   'archive_file': archive_file,
                                   'custom_fields': custom_fields or {},
@@ -366,8 +370,8 @@ def file_load(id):
 s.register_serializer('file', file_dump, file_load)
 
 
-def archive_file(filename, name=None, delete_original=False, custom_fields=None):
-    @provenance(archive_file=True, name=name or 'archive_file',
+def archive_file(filename, name=None, delete_original=False, custom_fields=None, preserve_ext=False):
+    @provenance(archive_file=True, name=name or 'archive_file', preserve_file_ext=preserve_ext,
                 delete_original_file=delete_original, custom_fields=custom_fields)
     def _archive_file(filename):
         return filename

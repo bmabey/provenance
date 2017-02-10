@@ -145,6 +145,22 @@ def test_archived_file_becoming_loaded_value_while_persisting_artifact_info(dbdi
     ar = ret.artifact
     assert ar.inputs['kargs']['df'].artifact.id == archived_file.artifact.id
 
+
+
+def test_archived_file_allows_extensions_to_be_ignored(dbdiskrepo):
+    repo = dbdiskrepo
+    assert p.get_default_repo() is not None
+    tmp_dir = tempfile.mkdtemp('prov_integration_archive_test')
+    data_filename = os.path.join(tmp_dir, 'data.csv00')
+    pd.DataFrame({'a': [0, 1, 2], 'b': [10, 11, 12]}).\
+        to_csv(data_filename, index=False)
+
+    archived_file = p.archive_file(data_filename, delete_original=True,
+                                   preserve_ext=False)
+
+    assert not archived_file.artifact.id.endswith('.csv')
+
+
 def test_fn_with_merged_defaults_set_with_provenance_decorator(repo):
 
     @p.provenance(merge_defaults=True)
