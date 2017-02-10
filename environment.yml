@@ -2,6 +2,8 @@ name: provenance-dev
 dependencies:
 - python==3.5
 - ipython
+- numpy
+- pandas
 - pip:
   - versioneer
   - twine

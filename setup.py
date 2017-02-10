@@ -12,7 +12,7 @@ setup(
     packages=('provenance',),
     setup_requires=['pytest>=3.0.0', 'pytest-runner'],
     install_requires=[open('requirements.txt').read().strip().split('\n')],
-    test_require=[open('test_requirements.txt').read().strip().split('\n')],
+    tests_require=[open('test_requirements.txt').read().strip().split('\n')],
     description="Provenance and caching library for functions",
     long_description=(open('README.rst').read() if exists('README.rst')
                       else ''),
