@@ -162,8 +162,9 @@ def _base_fn(f):
 _EXT_MAPPINGS = {'mpeg': 'mpg',
                  'jpeg': 'jpg'}
 def _extract_extension(filename):
-    ext = os.path.splitext(filename)[1].lower().strip()[1:]
+    ext = os.path.splitext(filename)[1]
     if len(ext) > 0:
+        ext = ext.lower().strip()[1:]
         return '.' + _EXT_MAPPINGS.get(ext, ext)
     else:
         return ext
