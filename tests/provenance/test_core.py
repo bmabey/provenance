@@ -52,7 +52,7 @@ def test_integration_test(repo):
     assert result == [8, 10]
 
     #check initial wrapping
-    assert result.artifact.id == hash([8,10])
+    assert result.artifact.value_id == hash([8,10])
     artifact = result.artifact
 
     # check that inputs were removed
@@ -74,8 +74,8 @@ def test_integration_test(repo):
     # Check that the dependencies can be returned
     dependencies = p.dependencies(result.artifact.id)
     assert dependencies == [data_artifact,
-                            artifact.inputs['kargs']['inc_b'].artifact,
                             inc_a_artifact,
+                            artifact.inputs['kargs']['inc_b'].artifact,
                             artifact]
 
 
@@ -163,7 +163,7 @@ def test_archived_file_allows_extensions_to_be_ignored(dbdiskrepo):
     archived_file = p.archive_file(data_filename, delete_original=True,
                                    preserve_ext=False)
 
-    assert not archived_file.artifact.id.endswith('.csv')
+    assert not archived_file.artifact.value_id.endswith('.csv')
 
 
 
@@ -177,7 +177,7 @@ def test_archived_file_canonicalizes_file_extenstions(dbdiskrepo):
     archived_file = p.archive_file(data_filename, delete_original=True,
                                    preserve_ext=True)
 
-    assert archived_file.artifact.id.endswith('.mpg')
+    assert archived_file.artifact.value_id.endswith('.mpg')
 
 
 def test_fn_with_merged_defaults_set_with_provenance_decorator(repo):

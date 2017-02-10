@@ -55,8 +55,8 @@ def process_info():
             'num_threads': p.num_threads()}
 
 
-artifact_properties = ['id', 'input_id', 'inputs', 'fn_module', 'fn_name', 'value',
-                       'name', 'version', 'composite', 'input_id_duration',
+artifact_properties = ['id', 'value_id', 'inputs', 'fn_module', 'fn_name', 'value',
+                       'name', 'version', 'composite', 'value_id_duration',
                        'serializer', 'load_kwargs', 'dump_kwargs',
                        'compute_duration', 'hash_duration', 'computed_at', 'host',
                        'process', 'custom_fields']
@@ -120,7 +120,7 @@ def hash_inputs(inputs):
             'varargs': tuple(hash(arg) for arg in inputs['varargs'])}
 
 
-def create_input_id(input_hashes, input_hash_fn, name, version):
+def create_id(input_hashes, input_hash_fn, name, version):
     return t.thread_first(input_hashes,
                           input_hash_fn,
                           (t.merge, {'name': name, 'version': version}),
@@ -130,7 +130,7 @@ def create_input_id(input_hashes, input_hash_fn, name, version):
 @t.curry
 def composite_artifact(repo, inputs, input_hashes, input_hash_fn, artifact_info,
                        compute_duration, computed_at, key, value):
-    start_input_id_time = time.time()
+    start_hash_time = time.time()
     info = artifact_info.copy()
     info['composite'] = False
     info['name'] = '{}_{}'.format(info['name'], key)
@@ -138,15 +138,15 @@ def composite_artifact(repo, inputs, input_hashes, input_hash_fn, artifact_info,
     info['load_kwargs'] = info['load_kwargs'].get(key, None)
     info['dump_kwargs'] = info['dump_kwargs'].get(key, None)
 
-    input_id = create_input_id(input_hashes, input_hash_fn, info['name'], info['version'])
-    input_id_duration = time.time() - start_input_id_time
-
-    start_hash_time = time.time()
-    id = hash(value)
+    id = create_id(input_hashes, input_hash_fn, info['name'], info['version'])
     hash_duration = time.time() - start_hash_time
 
-    record = ArtifactRecord(id=id, input_id=input_id, value=value,
-                            input_id_duration=input_id_duration,
+    start_value_id_time = time.time()
+    value_id = hash(value)
+    value_id_duration = time.time() - start_hash_time
+
+    record = ArtifactRecord(id=id, value_id=value_id, value=value,
+                            value_id_duration=value_id_duration,
                             compute_duration=compute_duration,
                             hash_duration=hash_duration, computed_at=computed_at,
                             inputs=inputs, **info)
@@ -191,16 +191,16 @@ def provenance_wrapper(repo, f):
     def _provenance_wrapper(*args, **kargs):
         r = repos.get_default_repo() if repo is None else repo
         info = artifact_info
-        start_input_id_time = time.time()
+        start_hash_time = time.time()
         varargs, argsd = extract_args(args, kargs)
         inputs = input_process_fn({'varargs': varargs + func_info['varargs'],
                                    'kargs': t.merge(argsd, func_info['kargs'])})
         input_hashes = hash_inputs(inputs)
-        input_id = create_input_id(input_hashes, **func_info['identifiers'])
-        input_id_duration = time.time() - start_input_id_time
+        id = create_id(input_hashes, **func_info['identifiers'])
+        hash_duration = time.time() - start_hash_time
 
         try:
-            artifact = r.get_by_input_id(input_id)
+            artifact = r.get_by_id(id)
         except KeyError:
             artifact = None
 
@@ -211,7 +211,7 @@ def provenance_wrapper(repo, f):
             compute_duration = time.time() - start_compute_time
 
             post_input_hashes = hash_inputs(inputs)
-            if input_id != create_input_id(post_input_hashes, **func_info['identifiers']):
+            if id != create_id(post_input_hashes, **func_info['identifiers']):
                 modified_inputs = []
                 kargs = input_hashes['kargs']
                 varargs = input_hashes['varargs']
@@ -235,7 +235,7 @@ def provenance_wrapper(repo, f):
                 artifact_info['dump_kwargs'] = None
 
             archive_file = func_info['archive_file']
-            start_hash_time = time.time()
+            start_value_id_time = time.time()
             if archive_file:
                 if hasattr(value, '__fspath__'):
                     filename = value.__fspath__()
@@ -243,19 +243,19 @@ def provenance_wrapper(repo, f):
                     filename = str(value)
                 if not os.path.exists(filename):
                     raise FileNotFoundError("Unable to archive file, {}, because it doesn't exist!".format(filename))
-                id = file_hash(value)
+                value_id = file_hash(value)
                 if func_info['preserve_file_ext']:
                     extension = _extract_extension(filename)
-                    id += extension
+                    value_id += extension
                 # TODO: figure out best place to put the hash_name config and use in both cases
-                #id = file_hash(value, hash_name=r.hash_name)
-                value = ArchivedFile(id, filename, in_repo=False)
+                #value_id = file_hash(value, hash_name=r.hash_name)
+                value = ArchivedFile(value_id, filename, in_repo=False)
             else:
-                id = hash(value)
-            hash_duration = time.time() - start_hash_time
+                value_id = hash(value)
+            value_id_duration = time.time() - start_value_id_time
 
-            record = ArtifactRecord(id=id, input_id=input_id, value=value,
-                                    input_id_duration=input_id_duration,
+            record = ArtifactRecord(id=id, value_id=value_id, value=value,
+                                    value_id_duration=value_id_duration,
                                     compute_duration=compute_duration,
                                     hash_duration=hash_duration,
                                     computed_at=computed_at,

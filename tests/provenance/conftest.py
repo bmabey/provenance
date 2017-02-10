@@ -158,7 +158,7 @@ def atomic_repo(request, db_session):
 
 
 md5 = st.text('0123456789abcdef', min_size=32, max_size=32)
-_artifact_record_st = st.fixed_dictionaries({'id': md5, 'input_id': md5})
+_artifact_record_st = st.fixed_dictionaries({'id': md5, 'value_id': md5})
 
 def artifact_record(**kargs):
     artifact_props = t.merge({k: None for k in  pc.artifact_properties},
