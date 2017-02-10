@@ -1,16 +1,18 @@
-from collections import namedtuple, OrderedDict, defaultdict
-import toolz as t
-from boltons import funcutils as bfu
+from collections import namedtuple
 import time
 import datetime
 
 import multiprocessing
 import os
 import platform
+import shutil
+
 import psutil
+import toolz as t
+from boltons import funcutils as bfu
 
 from ._dependencies import dependencies
-from .hashing import hash
+from .hashing import hash, file_hash
 from . import repos as repos
 from . import serializers as s
 from .serializers import DEFAULT_VALUE_SERIALIZER
@@ -62,6 +64,7 @@ artifact_properties = ['id', 'input_id', 'inputs', 'fn_module', 'fn_name', 'valu
 ArtifactRecord = namedtuple('ArtifactRecord', artifact_properties)
 
 
+
 def fn_info(f):
     info = utils.fn_info(f)
     metadata = get_metadata(f)
@@ -69,23 +72,36 @@ def fn_info(f):
                            'version': metadata['version'],
                            'input_hash_fn': metadata['input_hash_fn']}
     info['input_process_fn'] = metadata['input_process_fn']
-    info['composite'] = metadata.get('returns_composite', False)
-    info['custom_fields'] = t.dissoc(metadata,
-                                     'name', 'version', 'input_hash_fn',
-                                     'input_process_fn', 'returns_composite',
-                                     'serializer', 'load_kwargs', 'dump_kwargs')
+    info['composite'] = metadata['returns_composite']
+    info['archive_file'] = metadata['archive_file']
+    info['custom_fields'] = metadata['custom_fields']
 
     if info['composite']:
-        info['serializer'] = metadata.get('serializer', {})
-        info['load_kwargs'] = metadata.get('load_kwargs', {})
-        info['dump_kwargs'] = metadata.get('dump_kwargs', {})
+        if info['archive_file']:
+            raise NotImplementedError("Using 'composite' and 'archive_file' is not supported.")
+        info['serializer'] = metadata['serializer'] or {}
+        info['load_kwargs'] = metadata['load_kwargs'] or {}
+        info['dump_kwargs'] = metadata['dump_kwargs'] or {}
         valid_serializer = isinstance(info['serializer'], dict)
         for serializer in info['serializer'].values():
             valid_serializer = valid_serializer and serializer in s.serializers
             if not valid_serializer:
                 break
+    elif info['archive_file']:
+        serializer = metadata['serializer'] or 'file'
+        if serializer != 'file':
+            raise ValueError("With 'archive_file' set True the only valid 'serializer' is 'file'")
+        if metadata.get('dump_kwargs') is not None:
+            raise ValueError("With 'archive_file' set True you may not specify any dump_kwargs.")
+        if metadata.get('load_kwargs') is not None:
+            raise ValueError("With 'archive_file' set True you may not specify any load_kwargs.")
+        info['serializer'] = 'file'
+        info['load_kwargs'] = metadata['load_kwargs'] or {}
+        info['dump_kwargs'] = (metadata['dump_kwargs']
+                               or {'delete_original': metadata['delete_original_file']})
+        valid_serializer = True
     else:
-        info['serializer'] = metadata.get('serializer', DEFAULT_VALUE_SERIALIZER.name)
+        info['serializer'] = metadata.get('serializer', DEFAULT_VALUE_SERIALIZER.name) or DEFAULT_VALUE_SERIALIZER.name
         info['load_kwargs'] = metadata.get('load_kwargs', None)
         info['dump_kwargs'] = metadata.get('dump_kwargs', None)
         valid_serializer = info['serializer'] in s.serializers
@@ -205,8 +221,22 @@ def provenance_wrapper(repo, f):
                 artifact_info['load_kwargs'] = None
                 artifact_info['dump_kwargs'] = None
 
+            archive_file = func_info['archive_file']
             start_hash_time = time.time()
-            id = hash(value)
+            if archive_file:
+                if hasattr(value, '__fspath__'):
+                    filename = value.__fspath__()
+                else:
+                    filename = str(value)
+                if not os.path.exists(filename):
+                    raise FileNotFoundError("Unable to archive file, {}, because it doesn't exist!".format(filename))
+                extension = os.path.splitext(filename)[1]
+                id = file_hash(value) + extension
+                # TODO: figure out best place to put the hash_name config and use in both cases
+                #id = file_hash(value, hash_name=r.hash_name)
+                value = ArchivedFile(id, filename, in_repo=False)
+            else:
+                id = hash(value)
             hash_duration = time.time() - start_hash_time
 
             record = ArtifactRecord(id=id, input_id=input_id, value=value,
@@ -216,6 +246,10 @@ def provenance_wrapper(repo, f):
                                     computed_at=computed_at,
                                     inputs=inputs, **artifact_info)
             artifact = r.put(record)
+
+            if archive_file:
+                # mark the file as in the repo (yucky, I know)
+                artifact.value.in_repo = True
 
         return artifact.proxy()
 
@@ -249,7 +283,10 @@ def remove_inputs_fn(to_remove):
 
 def provenance(version=0, repo=None, name=None, merge_defaults=None,
                ignore=None, input_hash_fn=None, remove=None, input_process_fn=None,
-               _provenance_wrapper=provenance_wrapper, **kargs):
+               archive_file=False, delete_original_file=False,
+               returns_composite=False, custom_fields=None,
+               serializer=None, load_kwargs=None, dump_kwargs=None,
+               _provenance_wrapper=provenance_wrapper):
     if ignore and input_hash_fn:
         raise ValueError("You cannot provide both ignore and input_hash_fn")
 
@@ -274,15 +311,67 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
         _name = name
         if _name is None:
             _name = f.__name__
-        f._provenance_metadata = t.merge(kargs,
-                                         {'version': version,
-                                          'name': _name,
-                                          'input_hash_fn': input_hash_fn,
-                                          'input_process_fn': input_process_fn})
+        f._provenance_metadata = {'version': version,
+                                  'name': _name,
+                                  'archive_file': archive_file,
+                                  'delete_original_file': delete_original_file,
+                                  'input_hash_fn': input_hash_fn,
+                                  'input_process_fn': input_process_fn,
+                                  'archive_file': archive_file,
+                                  'delete_original_file': delete_original_file,
+                                  'returns_composite': returns_composite,
+                                  'archive_file': archive_file,
+                                  'custom_fields': custom_fields or {},
+                                  'serializer': serializer,
+                                  'load_kwargs': load_kwargs,
+                                  'dump_kwargs': dump_kwargs}
         f.__merge_defaults__ = merge_defaults
         return _provenance_wrapper(repo, f)
 
     return wrapped
+
+class ArchivedFile(object):
+    def __init__(self, id, original_filename=None, in_repo=True):
+        self.blob_id = id
+        self.original_filename = original_filename
+        self.in_repo = in_repo
+
+    def abspath(self):
+        repo = repos.get_default_repo()
+        path = repo.blobstore._filename(self.blob_id)
+        return os.path.abspath(path)
+
+    def __fspath__(self):
+        return self.abspath() if self.in_repo else self.original_filename
+
+    def __str__(self):
+        return self.__fspath__()
+
+    def __repr__(self):
+        if self.original_filename:
+            return "<ArchivedFile {}, {} >".format(self.blob_id, self.original_filename)
+        else:
+            return "<ArchivedFile {} >".format(self.blob_id)
+
+
+def file_dump(archived_file, dest_filename, delete_original=False):
+    op = shutil.move if delete_original else shutil.copy
+    op(archived_file.original_filename, dest_filename)
+
+
+def file_load(id):
+    return ArchivedFile(id, in_repo=True)
+
+
+s.register_serializer('file', file_dump, file_load)
+
+
+def archive_file(filename, name=None, delete_original=False, custom_fields=None):
+    @provenance(archive_file=True, name=name or 'archive_file',
+                delete_original_file=delete_original, custom_fields=custom_fields)
+    def _archive_file(filename):
+        return filename
+    return _archive_file(filename)
 
 
 def provenance_set(set_name=None, initial_set=None, set_name_fn=None):

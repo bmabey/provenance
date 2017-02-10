@@ -7,11 +7,14 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
+SHA1_LENGTH = 40
+ID_LENGTH = SHA1_LENGTH + 10 # extra 10 for optional file extension info
+
 class Artifact(Base):
     __tablename__ = 'artifacts'
 
-    id = Column(VARCHAR(32), primary_key=True)
-    input_id = Column(VARCHAR(32))
+    id = Column(VARCHAR(ID_LENGTH), primary_key=True)
+    input_id = Column(VARCHAR(SHA1_LENGTH))
 
     name = Column(VARCHAR(1000))
     version = Column(INTEGER)
@@ -83,7 +86,7 @@ class ArtifactSet(Base):
     __tablename__ = 'artifact_sets'
 
     id = Column(Integer, primary_key=True)
-    set_id = Column(VARCHAR(32))
+    set_id = Column(VARCHAR(SHA1_LENGTH))
     name = Column(VARCHAR(1000))
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
 
@@ -106,7 +109,7 @@ class ArtifactSet(Base):
 class ArtifactSetMember(Base):
     __tablename__ = 'artifact_set_members'
 
-    set_id = Column(VARCHAR(32), #ForeignKey("artifact_sets.set_id"),
+    set_id = Column(VARCHAR(SHA1_LENGTH), #ForeignKey("artifact_sets.set_id"),
                     primary_key=True)
-    artifact_id = Column(VARCHAR(32), #ForeignKey("artifacts.id"),
+    artifact_id = Column(VARCHAR(ID_LENGTH), #ForeignKey("artifacts.id"),
                          primary_key=True)

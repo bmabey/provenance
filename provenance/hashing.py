@@ -283,3 +283,17 @@ def hash(obj, hash_name='md5', coerce_mmap=True):
         hasher = Hasher(hash_name=hash_name)
 
     return hasher.hash(obj)
+
+
+def file_hash(filename, hash_name='md5'):
+    """Streams the bytes of the given file through either md5 or sha1
+       and returns the hexdigest.
+    """
+    if hash_name not in set(['md5', 'sha1']):
+        raise ValueError('hashname must be "md5" or "sha1"')
+
+    hasher = hashlib.md5() if hash_name == 'md5' else hashlib.sha1()
+    with open(filename, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
