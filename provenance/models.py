@@ -8,13 +8,13 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 SHA1_LENGTH = 40
-ID_LENGTH = SHA1_LENGTH + 10 # extra 10 for optional file extension info
+VALUE_ID_LENGTH = SHA1_LENGTH + 10 # extra 10 for optional file extension info
 
 class Artifact(Base):
     __tablename__ = 'artifacts'
 
-    id = Column(VARCHAR(ID_LENGTH), primary_key=True)
-    input_id = Column(VARCHAR(SHA1_LENGTH))
+    id = Column(VARCHAR(SHA1_LENGTH), primary_key=True)
+    value_id = Column(VARCHAR(VALUE_ID_LENGTH))
 
     name = Column(VARCHAR(1000))
     version = Column(INTEGER)
@@ -23,7 +23,7 @@ class Artifact(Base):
 
     composite = Column(BOOLEAN)
 
-    input_id_duration = Column(FLOAT)
+    value_id_duration = Column(FLOAT)
     compute_duration = Column(FLOAT)
     hash_duration = Column(FLOAT)
 
@@ -40,13 +40,13 @@ class Artifact(Base):
 
     def __init__(self, artifact, expanded_inputs):
         self.id = artifact.id
-        self.input_id = artifact.input_id
+        self.value_id = artifact.value_id
         self.name = artifact.name
         self.version = artifact.version
         self.fn_module = artifact.fn_module
         self.fn_name = artifact.fn_name
         self.composite = artifact.composite
-        self.input_id_duration = artifact.input_id_duration
+        self.value_id_duration = artifact.value_id_duration
         self.compute_duration = artifact.compute_duration
         self.hash_duration = artifact.hash_duration
         self.host = artifact.host
@@ -61,13 +61,13 @@ class Artifact(Base):
     @memoized_property
     def props(self):
         return {'id': self.id,
-                'input_id': self.input_id,
+                'value_id': self.value_id,
                 'name': self.name,
                 'version': self.version,
                 'fn_module': self.fn_module,
                 'fn_name': self.fn_name,
                 'composite': self.composite,
-                'input_id_duration': self.input_id_duration,
+                'value_id_duration': self.value_id_duration,
                 'compute_duration': self.compute_duration,
                 'hash_duration': self.hash_duration,
                 'host': self.host,
@@ -111,5 +111,5 @@ class ArtifactSetMember(Base):
 
     set_id = Column(VARCHAR(SHA1_LENGTH), #ForeignKey("artifact_sets.set_id"),
                     primary_key=True)
-    artifact_id = Column(VARCHAR(ID_LENGTH), #ForeignKey("artifacts.id"),
+    artifact_id = Column(VARCHAR(SHA1_LENGTH), #ForeignKey("artifacts.id"),
                          primary_key=True)

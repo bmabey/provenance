@@ -55,38 +55,40 @@ def test_expanded_inputs(db_session):
         "filename": "foo-bar",
         "timestamp": now,
         "inc_x": {
-            "id": "0a8a4f6f12a7306093a0c9475fed5b23",
+            "id": "d2a4dd06f3193726cc2368d63de11c5792736467",
             "inputs": {
                 "__varargs": [],
                 "data": {
-                    "id": "5597229091988fa91de4717ceec47571",
+                    "id": "ac4ebcef1b99d5d86bfebfc8f940b3b9fda2a6c7",
                     "inputs": { "__varargs": [], "filename": "foo-bar", "timestamp": now},
                     "type": "ArtifactProxy"
                     },
                 "process_x_inc": 5,
                 "timestamp": now,
-                },
-            "type": "ArtifactProxy"
             },
+            "type": "ArtifactProxy"
+        },
         "inc_y": {
-            "id": "18f4c862d03fd3e4aee04e2893647a3f",
+            "id": "2816e9da806c5204820f0c45e79366dc42292fb4",
             "inputs": {
                 "__varargs": [],
                 "data": {
-                    "id": "5597229091988fa91de4717ceec47571",
+                    "id": "ac4ebcef1b99d5d86bfebfc8f940b3b9fda2a6c7",
                     "inputs": { "__varargs": [], "filename": "foo-bar", "timestamp": now},
                     "type": "ArtifactProxy"
-                    },
+                },
                 "process_y_inc": 10,
                 "timestamp": now
-                },
+            },
             "type": "ArtifactProxy"
-            }
         }
+    }
 
     results = pipeline(filename='foo-bar', process_x_inc=5, process_y_inc=10, timestamp=now)
     res = results['res'].artifact
     expanded_inputs = r.expand_inputs(res.inputs)
+    import pprint; pprint.pprint(expanded_inputs)
+    import pprint; pprint.pprint(expected_expanded_inputs)
     assert expanded_inputs == expected_expanded_inputs
 
     results = pipeline(filename='foo-bar', process_x_inc=5, process_y_inc=10, timestamp=now)
@@ -109,13 +111,13 @@ def test_basic_repo_ops(repo):
 
     assert repo.get_by_id(artifact.id).id == artifact.id
     assert repo[artifact.id].id == artifact.id
-    assert repo.get_by_input_id(artifact.input_id).id == artifact.id
+    assert repo.get_by_value_id(artifact.value_id).id == artifact.id
 
     repo.delete(artifact.id)
     assert artifact.id not in repo
     if hasattr(repo, 'blobstore'):
         assert artifact.id not in repo.blobstore
-        assert artifact.input_id not in repo.blobstore
+        assert artifact.value_id not in repo.blobstore
 
     with pytest.raises(KeyError) as e:
         repo.delete(artifact.id)
@@ -124,7 +126,7 @@ def test_basic_repo_ops(repo):
         repo.get_by_id(artifact.id)
 
     with pytest.raises(KeyError) as e:
-        repo.get_by_input_id(artifact.id)
+        repo.get_by_value_id(artifact.id)
 
 
 def test_repo_set_put_and_finding(repo):
@@ -192,7 +194,7 @@ def test_permissions(atomic_repo):
         repo.get_by_id(artifact.id)
 
     with pytest.raises(cs.PermissionError) as e:
-        repo.get_by_input_id(artifact.input_id)
+        repo.get_by_value_id(artifact.value_id)
 
     with pytest.raises(cs.PermissionError) as e:
         repo.get_value(artifact.id)
@@ -229,14 +231,14 @@ def test_chained_with_readonly():
     assert 'foo' in chained
 
     # but that it is not written to
-    record = artifact_record(id='bar', input_id='baz')
+    record = artifact_record(id='bar', value_id='baz')
     chained.put(record)
     assert 'bar' in chained
     assert 'bar' in write_repo
     assert 'bar' not in read_repo
-    assert chained.get_by_input_id(record.input_id).id == record.id
+    assert chained.get_by_value_id(record.value_id).id == record.id
     assert chained.get_by_id(record.id).id == record.id
-    assert chained.get_value(record.id) == record.value
+    assert chained.get_value(record) == record.value
 
 
 def test_chained_read_through_write():

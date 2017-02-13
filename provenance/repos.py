@@ -174,7 +174,7 @@ def is_proxy(obj):
 class Artifact(object):
     def __init__(self, repo, props, value=None, inputs=None):
         assert ('id' in props), "props must contain 'id'"
-        assert ('input_id' in props), "props must contain 'input_id'"
+        assert ('value_id' in props), "props must contain 'value_id'"
         self.__dict__ = props.copy()
 
         self.repo = repo
@@ -295,21 +295,21 @@ class MemoryRepo(ArtifactRepository):
         else:
             raise KeyError(artifact_id, self)
 
-    def get_by_input_id(self, input_id):
+    def get_by_value_id(self, value_id):
         cs.ensure_read(self)
-        record = _find_first(lambda a: a.input_id == input_id, self.artifacts)
+        record = _find_first(lambda a: a.value_id == value_id, self.artifacts)
         if record:
             return _artifact_from_record(self, record)
         else:
-            raise KeyError(input_id, self)
+            raise KeyError(value_id, self)
 
-    def get_value(self, artifact_id, composite=False):
+    def get_value(self, artifact, composite=False):
         cs.ensure_read(self)
-        return _find_first(lambda a: a.id == artifact_id, self.artifacts).value
+        return _find_first(lambda a: a.id == artifact.id, self.artifacts).value
 
     def get_inputs(self, artifact):
         cs.ensure_read(self)
-        return _find_first(lambda a: a.input_id == artifact.input_id, self.artifacts).inputs
+        return _find_first(lambda a: a.id == artifact.id, self.artifacts).inputs
 
     def delete(self, artifact_or_id):
         artifact_id = _artifact_id(artifact_or_id)
@@ -332,6 +332,7 @@ class MemoryRepo(ArtifactRepository):
             raise KeyError(self, set_id)
 
         return art_set
+
     def get_set_by_name(self, name):
         cs.ensure_read(self)
         versions = [s for s in self.sets if s.name == name]
@@ -353,8 +354,8 @@ class MemoryRepo(ArtifactRepository):
             raise KeyError(set_id, self)
 
 
-
-
+# TODO: Do we want to represent the value of the artifacts
+# in the expanded inputs in some way?
 def expand_inputs(inputs):
     def transform(val):
         if isinstance(val, (Artifact)):
@@ -506,10 +507,10 @@ class PostgresRepo(ArtifactRepository):
     def put(self, artifact_record, read_through=False):
         with self.session() as session:
             cs.ensure_put(self, artifact_record.id, read_through)
-            self.blobstore.put(artifact_record.id, artifact_record.value,
-                               s.serializer(artifact_record))
-            self.blobstore.put(artifact_record.input_id, artifact_record.inputs,
+            self.blobstore.put(artifact_record.id, artifact_record.inputs,
                                s.DEFAULT_INPUT_SERIALIZER)
+            self.blobstore.put(artifact_record.value_id, artifact_record.value,
+                               s.serializer(artifact_record))
 
             expanded_inputs = expand_inputs(artifact_record.inputs)
 
@@ -542,23 +543,23 @@ class PostgresRepo(ArtifactRepository):
             missing = ids - found
             raise KeyError(missing, self)
 
-    def get_by_input_id(self, input_id):
+    def get_by_value_id(self, value_id):
         cs.ensure_read(self)
         with self.session() as session:
-            result = session.query(db.Artifact).filter(db.Artifact.input_id == input_id).first()
+            result = session.query(db.Artifact).filter(db.Artifact.value_id == value_id).first()
 
         if result:
             return Artifact(self, result.props)
         else:
-            raise KeyError(input_id, self)
+            raise KeyError(value_id, self)
 
     def get_value(self, artifact):
         cs.ensure_read(self)
-        return self.blobstore.get(artifact.id, s.serializer(artifact))
+        return self.blobstore.get(artifact.value_id, s.serializer(artifact))
 
     def get_inputs(self, artifact):
         cs.ensure_read(self)
-        return self.blobstore.get(artifact.input_id, s.DEFAULT_INPUT_SERIALIZER)
+        return self.blobstore.get(artifact.id, s.DEFAULT_INPUT_SERIALIZER)
 
     def delete(self, artifact_or_id):
         with self.session() as session:
@@ -567,7 +568,7 @@ class PostgresRepo(ArtifactRepository):
             (session.query(db.Artifact).
              filter(db.Artifact.id == artifact.id).delete())
             self.blobstore.delete(artifact.id)
-            self.blobstore.delete(artifact.input_id)
+            self.blobstore.delete(artifact.value_id)
             session.commit()
 
     def put_set(self, artifact_set, read_through=False):
@@ -688,18 +689,18 @@ class ChainedRepo(ArtifactRepository):
         return cs.chained_delete(self, id,
                                  contains=_contains_set, delete=_delete_set)
 
-    def get_by_input_id(self, input_id):
+    def get_by_value_id(self, value_id):
         def get(store, id):
-            return store.get_by_input_id(id)
-        return cs.chained_get(self, get, input_id, put=_put_only_value)
+            return store.get_by_value_id(id)
+        return cs.chained_get(self, get, value_id, put=_put_only_value)
 
-    def get_value(self, artifact_id):
+    def get_value(self, artifact):
         for store in self.stores:
             try:
-                return store.get_value(artifact_id)
+                return store.get_value(artifact)
             except KeyError:
                 pass
-        raise KeyError(artifact_id, self)
+        raise KeyError(artifact, self)
 
     def delete(self, id):
         return cs.chained_delete(self, id)
@@ -793,7 +794,7 @@ class RepoSpy(wrapt.ObjectProxy):
                                  self.artifact_ids)
         self.get_by_id = save_artifact(repo.get_by_id,
                                        self.artifact_ids)
-        self.get_by_input_id = save_artifact(repo.get_by_input_id,
+        self.get_by_value_id = save_artifact(repo.get_by_value_id,
                                              self.artifact_ids)
 
 
