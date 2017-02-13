@@ -100,6 +100,7 @@ def fn_info(f):
         info['load_kwargs'] = metadata['load_kwargs'] or {}
         info['dump_kwargs'] = (metadata['dump_kwargs']
                                or {'delete_original': metadata['delete_original_file']})
+        info['delete_original_file'] = metadata['delete_original_file']
         valid_serializer = True
     else:
         info['serializer'] = metadata.get('serializer', DEFAULT_VALUE_SERIALIZER.name) or DEFAULT_VALUE_SERIALIZER.name
@@ -170,6 +171,17 @@ def _extract_extension(filename):
         return ext
 
 
+def _archive_file_hash(filename, preserve_file_ext):
+    if not os.path.exists(filename):
+        raise FileNotFoundError("Unable to archive file, {}, because it doesn't exist!".format(filename))
+    # TODO: figure out best place to put the hash_name config and use in both cases
+    value_id = file_hash(filename)
+    if preserve_file_ext:
+        extension = _extract_extension(filename)
+        value_id += extension
+    return value_id
+
+
 @t.curry
 def provenance_wrapper(repo, f):
     base_fn = _base_fn(f)
@@ -191,11 +203,24 @@ def provenance_wrapper(repo, f):
     def _provenance_wrapper(*args, **kargs):
         r = repos.get_default_repo() if repo is None else repo
         info = artifact_info
+        archive_file = func_info['archive_file']
+
         start_hash_time = time.time()
         varargs, argsd = extract_args(args, kargs)
-        inputs = input_process_fn({'varargs': varargs + func_info['varargs'],
-                                   'kargs': t.merge(argsd, func_info['kargs'])})
+        raw_inputs = {'varargs': varargs + func_info['varargs'],
+                      'kargs': t.merge(argsd, func_info['kargs'])}
+        inputs = input_process_fn(raw_inputs)
+
+        value_id = None
+        filename = None
+        archive_file_helper = archive_file and '_archive_file_filename' in raw_inputs['kargs']
+        if archive_file_helper:
+            filename = raw_inputs['kargs']['_archive_file_filename']
+            value_id = _archive_file_hash(filename, func_info['preserve_file_ext'])
+            inputs['filehash'] = value_id
+
         input_hashes = hash_inputs(inputs)
+
         id = create_id(input_hashes, **func_info['identifiers'])
         hash_duration = time.time() - start_hash_time
 
@@ -234,21 +259,15 @@ def provenance_wrapper(repo, f):
                 artifact_info['load_kwargs'] = None
                 artifact_info['dump_kwargs'] = None
 
-            archive_file = func_info['archive_file']
+
             start_value_id_time = time.time()
             if archive_file:
-                if hasattr(value, '__fspath__'):
-                    filename = value.__fspath__()
-                else:
-                    filename = str(value)
-                if not os.path.exists(filename):
-                    raise FileNotFoundError("Unable to archive file, {}, because it doesn't exist!".format(filename))
-                value_id = file_hash(value)
-                if func_info['preserve_file_ext']:
-                    extension = _extract_extension(filename)
-                    value_id += extension
-                # TODO: figure out best place to put the hash_name config and use in both cases
-                #value_id = file_hash(value, hash_name=r.hash_name)
+                if not archive_file_helper:
+                    if hasattr(value, '__fspath__'):
+                        filename = value.__fspath__()
+                    else:
+                        filename = str(value)
+                    value_id = _archive_file_hash(filename, func_info['preserve_file_ext'])
                 value = ArchivedFile(value_id, filename, in_repo=False)
             else:
                 value_id = hash(value)
@@ -265,6 +284,18 @@ def provenance_wrapper(repo, f):
             if archive_file:
                 # mark the file as in the repo (yucky, I know)
                 artifact.value.in_repo = True
+
+        elif archive_file_helper and func_info.get('delete_original_file', False):
+        # if we hit an artifact with archive_file we may still need to clean up the
+        # referenced file. This is normally taken care of when the file is 'serialzied'
+        # (see file_dump), but in the case of an artifact hit this would never happen.
+        # One potential downside of this approach is that this local file will be
+        # deleted and if the artifact value (i.e. the existing file) is not local
+        # yet it will download the file that we just deleted. Another approach would
+        # be to do a a put_overwrite which would potentially upload files multiple times.
+        # So for now, the cleanest way is to accept the potential re-downloading of data.
+            os.remove(filename)
+
 
         return artifact.proxy()
 
@@ -384,10 +415,16 @@ s.register_serializer('file', file_dump, file_load)
 
 def archive_file(filename, name=None, delete_original=False, custom_fields=None, preserve_ext=False):
     @provenance(archive_file=True, name=name or 'archive_file', preserve_file_ext=preserve_ext,
-                delete_original_file=delete_original, custom_fields=custom_fields)
-    def _archive_file(filename):
+                delete_original_file=delete_original, remove=['_archive_file_filename'],
+                custom_fields=custom_fields)
+
+    # we want artifacts created by archive_file to be invariant to the
+    # filename (see remove above) but # not the custom_fields.
+    # filename is still passed in so the hash of the file on disk can be
+    # computed as part of the id of the artifact.
+    def _archive_file(_archive_file_filename, custom_fields):
         return filename
-    return _archive_file(filename)
+    return _archive_file(filename, custom_fields)
 
 
 def provenance_set(set_name=None, initial_set=None, set_name_fn=None):

@@ -3,6 +3,7 @@ import pytest
 import tempfile
 import pandas as pd
 import os
+import shutil
 
 import provenance as p
 import provenance.core as pc
@@ -178,6 +179,48 @@ def test_archived_file_canonicalizes_file_extenstions(dbdiskrepo):
                                    preserve_ext=True)
 
     assert archived_file.artifact.value_id.endswith('.mpg')
+
+
+def test_archived_file_cache_hits_when_filename_is_different(dbdiskrepo):
+    repo = dbdiskrepo
+    assert p.get_default_repo() is not None
+    tmp_dir = tempfile.mkdtemp('prov_integration_archive_test')
+    data_filename = os.path.join(tmp_dir, 'data.csv')
+    pd.DataFrame({'a': [0, 1, 2], 'b': [10, 11, 12]}).\
+        to_csv(data_filename, index=False)
+
+    data_filename2 = os.path.join(tmp_dir, 'data2.csv')
+    shutil.copyfile(data_filename, data_filename2)
+
+    archived_file = p.archive_file(data_filename, delete_original=True)
+    assert not os.path.exists(data_filename)
+    archived_file2 = p.archive_file(data_filename2, delete_original=True)
+    assert not os.path.exists(data_filename2)
+
+    assert archived_file.artifact.id == archived_file2.artifact.id
+
+
+
+def test_archived_file_creates_a_new_artifact_when_custom_fields_are_different(dbdiskrepo):
+    repo = dbdiskrepo
+    assert p.get_default_repo() is not None
+    tmp_dir = tempfile.mkdtemp('prov_integration_archive_test')
+    data_filename = os.path.join(tmp_dir, 'data.csv')
+    pd.DataFrame({'a': [0, 1, 2], 'b': [10, 11, 12]}).\
+        to_csv(data_filename, index=False)
+
+    data_filename2 = os.path.join(tmp_dir, 'data2.csv')
+    shutil.copyfile(data_filename, data_filename2)
+
+    archived_file = p.archive_file(data_filename, delete_original=True,
+                                   custom_fields={'data_source': 'provider one'})
+    archived_file2 = p.archive_file(data_filename2, delete_original=True,
+                                    custom_fields={'data_source': 'provider two'})
+
+    assert archived_file.artifact.id != archived_file2.artifact.id
+    assert archived_file.artifact.value_id == archived_file2.artifact.value_id
+    assert archived_file.artifact.custom_fields == {'data_source': 'provider one'}
+    assert archived_file2.artifact.custom_fields == {'data_source': 'provider two'}
 
 
 def test_fn_with_merged_defaults_set_with_provenance_decorator(repo):
