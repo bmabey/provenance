@@ -172,6 +172,10 @@ def _extract_extension(filename):
 
 
 def _archive_file_hash(filename, preserve_file_ext):
+    if hasattr(filename, '__fspath__'):
+        filename = filename.__fspath__()
+    else:
+        filename = str(filename)
     if not os.path.exists(filename):
         raise FileNotFoundError("Unable to archive file, {}, because it doesn't exist!".format(filename))
     # TODO: figure out best place to put the hash_name config and use in both cases
@@ -263,10 +267,7 @@ def provenance_wrapper(repo, f):
             start_value_id_time = time.time()
             if archive_file:
                 if not archive_file_helper:
-                    if hasattr(value, '__fspath__'):
-                        filename = value.__fspath__()
-                    else:
-                        filename = str(value)
+                    filename = value
                     value_id = _archive_file_hash(filename, func_info['preserve_file_ext'])
                 value = ArchivedFile(value_id, filename, in_repo=False)
             else:
