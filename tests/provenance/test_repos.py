@@ -8,7 +8,7 @@ import provenance.repos as r
 from conftest import artifact_record
 
 
-def test_expanded_inputs(db_session):
+def test_inputs_json(db_session):
     repo = r.DbRepo(db_session, bs.MemoryStore())
     @p.provenance(version=0, name='initial_data', repo=repo)
     def load_data(filename, timestamp):
@@ -29,72 +29,40 @@ def test_expanded_inputs(db_session):
         _data = [a + b for a, b in zip(inc_x['data'], inc_y['data'])]
         return {'data': _data, 'timestamp': timestamp}
 
-
-    try:
-        import daskfunk as dsf
-
-        fn_graph = {'data': load_data,
-                    'inc_x': process_data_X,
-                    'inc_y': process_data_Y,
-                    'res': combine_processed_data}
-
-        pipeline = dsf.compile(fn_graph)
-    except ImportError:
-        def pipeline(filename, timestamp, process_x_inc, process_y_inc):
-            data = load_data(filename, timestamp)
-            inc_x = process_data_X(data, process_x_inc, timestamp)
-            inc_y = process_data_Y(data, process_y_inc, timestamp)
-            res = combine_processed_data(filename, inc_x, inc_y, timestamp)
-            return {'data': data, 'inc_x': inc_x, 'inc_y': inc_y, 'res': res}
-
+    def pipeline(filename, timestamp, process_x_inc, process_y_inc):
+        data = load_data(filename, timestamp)
+        inc_x = process_data_X(data, process_x_inc, timestamp)
+        inc_y = process_data_Y(data, process_y_inc, timestamp)
+        res = combine_processed_data(filename, inc_x, inc_y, timestamp)
+        return {'data': data, 'inc_x': inc_x, 'inc_y': inc_y, 'res': res}
 
     now = datetime(2016, 9, 27, 7, 51, 11, 613544)
 
-    expected_expanded_inputs = {
+    expected_inputs_json = {
         "__varargs": [],
         "filename": "foo-bar",
         "timestamp": now,
         "inc_x": {
             "id": "d2a4dd06f3193726cc2368d63de11c5792736467",
-            "inputs": {
-                "__varargs": [],
-                "data": {
-                    "id": "ac4ebcef1b99d5d86bfebfc8f940b3b9fda2a6c7",
-                    "inputs": { "__varargs": [], "filename": "foo-bar", "timestamp": now},
-                    "type": "ArtifactProxy"
-                    },
-                "process_x_inc": 5,
-                "timestamp": now,
-            },
+            "name": "process_data_X",
             "type": "ArtifactProxy"
         },
         "inc_y": {
             "id": "2816e9da806c5204820f0c45e79366dc42292fb4",
-            "inputs": {
-                "__varargs": [],
-                "data": {
-                    "id": "ac4ebcef1b99d5d86bfebfc8f940b3b9fda2a6c7",
-                    "inputs": { "__varargs": [], "filename": "foo-bar", "timestamp": now},
-                    "type": "ArtifactProxy"
-                },
-                "process_y_inc": 10,
-                "timestamp": now
-            },
+            "name": "process_data_Y",
             "type": "ArtifactProxy"
         }
     }
 
     results = pipeline(filename='foo-bar', process_x_inc=5, process_y_inc=10, timestamp=now)
     res = results['res'].artifact
-    expanded_inputs = r.expand_inputs(res.inputs)
-    import pprint; pprint.pprint(expanded_inputs)
-    import pprint; pprint.pprint(expected_expanded_inputs)
-    assert expanded_inputs == expected_expanded_inputs
+    inputs_json = r._inputs_json(res.inputs)
+    assert inputs_json == expected_inputs_json
 
     results = pipeline(filename='foo-bar', process_x_inc=5, process_y_inc=10, timestamp=now)
     res = results['res'].artifact
-    expanded_inputs = r.expand_inputs(res.inputs)
-    assert expanded_inputs == expected_expanded_inputs
+    inputs_json = r._inputs_json(res.inputs)
+    assert inputs_json == expected_inputs_json
 
 
 def test_basic_repo_ops(repo):

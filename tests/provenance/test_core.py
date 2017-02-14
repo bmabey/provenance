@@ -49,15 +49,16 @@ def test_integration_test(repo):
         return res
 
     result = run_pipeline('foo-bar.csv', 'something', 'removed')
+    artifact = result.artifact
+    inc_a_artifact = artifact.inputs['kargs']['inc_a'].artifact
+    inc_b_artifact = artifact.inputs['kargs']['inc_b'].artifact
 
     assert result == [8, 10]
 
     #check initial wrapping
-    assert result.artifact.value_id == hash([8,10])
-    artifact = result.artifact
+    assert artifact.value_id == hash([8,10])
 
     # check that inputs were removed
-    inc_a_artifact = artifact.inputs['kargs']['inc_a'].artifact
     assert inc_a_artifact.inputs == {'kargs': {'data': [1, 2], 'process_a_inc': 1},
                                      'varargs': ()}
 
@@ -78,6 +79,10 @@ def test_integration_test(repo):
                             inc_a_artifact,
                             artifact.inputs['kargs']['inc_b'].artifact,
                             artifact]
+
+    # Check that the input_artifact_ids were properly stored
+    assert result.artifact.input_artifact_ids == \
+            frozenset((inc_a_artifact.id, inc_b_artifact.id))
 
 
 def test_archived_file_used_in_input(dbdiskrepo):

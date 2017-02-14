@@ -12,6 +12,7 @@ import toolz as t
 from boltons import funcutils as bfu
 
 from ._dependencies import dependencies
+from . import artifact_id_hasher as ah
 from .hashing import hash, file_hash
 from . import repos as repos
 from . import serializers as s
@@ -59,7 +60,7 @@ artifact_properties = ['id', 'value_id', 'inputs', 'fn_module', 'fn_name', 'valu
                        'name', 'version', 'composite', 'value_id_duration',
                        'serializer', 'load_kwargs', 'dump_kwargs',
                        'compute_duration', 'hash_duration', 'computed_at', 'host',
-                       'process', 'custom_fields']
+                       'process', 'custom_fields', 'input_artifact_ids']
 
 ArtifactRecord = namedtuple('ArtifactRecord', artifact_properties)
 
@@ -117,8 +118,22 @@ def fn_info(f):
 
 
 def hash_inputs(inputs):
-    return {'kargs': t.valmap(hash, inputs['kargs']),
-            'varargs': tuple(hash(arg) for arg in inputs['varargs'])}
+    kargs = {}
+    varargs = []
+    all_ids = frozenset()
+
+    for k, v in inputs['kargs'].items():
+        h, ids = hash(v, hasher=ah.artifact_id_hasher())
+        kargs[k] = h
+        all_ids |= ids
+
+    for v in inputs['varargs']:
+        h, ids = hash(v, hasher=ah.artifact_id_hasher())
+        varargs.append(h)
+        all_ids |= ids
+
+    input_hashes = {'kargs': kargs, 'varargs': tuple(varargs)}
+    return (input_hashes, all_ids)
 
 
 def create_id(input_hashes, input_hash_fn, name, version):
@@ -129,8 +144,9 @@ def create_id(input_hashes, input_hash_fn, name, version):
 
 
 @t.curry
-def composite_artifact(repo, inputs, input_hashes, input_hash_fn, artifact_info,
-                       compute_duration, computed_at, key, value):
+def composite_artifact(repo, inputs, input_hashes, input_artifact_ids,
+                       input_hash_fn, artifact_info, compute_duration,
+                       computed_at, key, value):
     start_hash_time = time.time()
     info = artifact_info.copy()
     info['composite'] = False
@@ -147,6 +163,7 @@ def composite_artifact(repo, inputs, input_hashes, input_hash_fn, artifact_info,
     value_id_duration = time.time() - start_hash_time
 
     record = ArtifactRecord(id=id, value_id=value_id, value=value,
+                            input_artifact_ids=input_artifact_ids,
                             value_id_duration=value_id_duration,
                             compute_duration=compute_duration,
                             hash_duration=hash_duration, computed_at=computed_at,
@@ -223,7 +240,7 @@ def provenance_wrapper(repo, f):
             value_id = _archive_file_hash(filename, func_info['preserve_file_ext'])
             inputs['filehash'] = value_id
 
-        input_hashes = hash_inputs(inputs)
+        input_hashes, input_artifact_ids = hash_inputs(inputs)
 
         id = create_id(input_hashes, **func_info['identifiers'])
         hash_duration = time.time() - start_hash_time
@@ -239,7 +256,7 @@ def provenance_wrapper(repo, f):
             value = f(*varargs, **argsd)
             compute_duration = time.time() - start_compute_time
 
-            post_input_hashes = hash_inputs(inputs)
+            post_input_hashes, _ = hash_inputs(inputs)
             if id != create_id(post_input_hashes, **func_info['identifiers']):
                 modified_inputs = []
                 kargs = input_hashes['kargs']
@@ -256,8 +273,9 @@ def provenance_wrapper(repo, f):
 
             if artifact_info['composite']:
                 input_hash_fn = func_info['identifiers']['input_hash_fn']
-                ca = composite_artifact(r, inputs, input_hashes, input_hash_fn,
-                                        artifact_info, compute_duration, computed_at)
+                ca = composite_artifact(r, inputs, input_hashes, input_artifact_ids,
+                                        input_hash_fn, artifact_info,
+                                        compute_duration, computed_at)
                 value = {k: ca(k, v) for k, v in value.items()}
                 artifact_info['serializer'] = DEFAULT_VALUE_SERIALIZER.name
                 artifact_info['load_kwargs'] = None
@@ -275,6 +293,7 @@ def provenance_wrapper(repo, f):
             value_id_duration = time.time() - start_value_id_time
 
             record = ArtifactRecord(id=id, value_id=value_id, value=value,
+                                    input_artifact_ids=input_artifact_ids,
                                     value_id_duration=value_id_duration,
                                     compute_duration=compute_duration,
                                     hash_duration=hash_duration,
