@@ -354,21 +354,18 @@ class MemoryRepo(ArtifactRepository):
             raise KeyError(set_id, self)
 
 
-# TODO: Do we want to represent the value of the artifacts
-# in the expanded inputs in some way?
-def expand_inputs(inputs):
-    def transform(val):
-        if isinstance(val, (Artifact)):
-            return {'type': 'Artifact', 'id': val.id,
-                    'inputs': expand_inputs(val.inputs)}
-        elif type(val) in {ArtifactProxy, CallableArtifactProxy}:
-            return {'type': 'ArtifactProxy', 'id': val.artifact.id,
-                    'inputs': expand_inputs(val.artifact.inputs)}
-        else:
-            return val
+def _transform(val):
+    if isinstance(val, (Artifact)):
+        return {'id': val.id, 'type': 'Artifact', 'name': val.name}
+    elif type(val) in {ArtifactProxy, CallableArtifactProxy}:
+        return {'id': val.artifact.id, 'type': 'ArtifactProxy', 'name': val.artifact.name}
+    else:
+        return val
 
-    expanded = t.valmap(transform, inputs['kargs'])
-    expanded['__varargs'] = list(t.map(transform, inputs['varargs']))
+
+def _inputs_json(inputs):
+    expanded = t.valmap(_transform, inputs['kargs'])
+    expanded['__varargs'] = list(t.map(_transform, inputs['varargs']))
 
     return expanded
 
@@ -512,9 +509,9 @@ class PostgresRepo(ArtifactRepository):
             self.blobstore.put(artifact_record.value_id, artifact_record.value,
                                s.serializer(artifact_record))
 
-            expanded_inputs = expand_inputs(artifact_record.inputs)
+            inputs_json = _inputs_json(artifact_record.inputs)
 
-            db_artifact = db.Artifact(artifact_record, expanded_inputs)
+            db_artifact = db.Artifact(artifact_record, inputs_json)
             session.add(db_artifact)
             session.commit()
 
