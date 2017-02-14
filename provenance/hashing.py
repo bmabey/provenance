@@ -80,7 +80,7 @@ class Hasher(Pickler):
         # Initialise the hash obj
         self._hash = hashlib.new(hash_name)
 
-    def hash(self, obj, return_digest=True):
+    def hash(self, obj):
         try:
             self.dump(obj)
         except pickle.PicklingError as e:
@@ -88,8 +88,7 @@ class Hasher(Pickler):
             raise
         dumps = self.stream.getvalue()
         self._hash.update(dumps)
-        if return_digest:
-            return self._hash.hexdigest()
+        return self._hash.hexdigest()
 
     def save(self, obj):
         obj = value_repr(obj)
@@ -262,7 +261,7 @@ class NumpyHasher(Hasher):
         Hasher.save(self, obj)
 
 
-def hash(obj, hash_name='sha1', coerce_mmap=True):
+def hash(obj, hasher=None, hash_name='sha1', coerce_mmap=True):
     """ Quick calculation of a hash to identify uniquely Python objects
         containing numpy arrays. The difference with this hash and joblib
         is that it tries to hash different mutable objects with the same
@@ -277,10 +276,11 @@ def hash(obj, hash_name='sha1', coerce_mmap=True):
         coerce_mmap: boolean
             Make no difference between np.memmap and np.ndarray
     """
-    if 'numpy' in sys.modules:
-        hasher = NumpyHasher(hash_name=hash_name, coerce_mmap=coerce_mmap)
-    else:
-        hasher = Hasher(hash_name=hash_name)
+    if hasher is None:
+        if 'numpy' in sys.modules:
+            hasher = NumpyHasher(hash_name=hash_name, coerce_mmap=coerce_mmap)
+        else:
+            hasher = Hasher(hash_name=hash_name)
 
     return hasher.hash(obj)
 

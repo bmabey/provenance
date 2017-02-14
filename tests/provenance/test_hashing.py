@@ -2,6 +2,7 @@ from hypothesis import given
 import provenance as p
 from provenance.hashing import hash
 import provenance.hashing as h
+import provenance.artifact_id_hasher as ah
 import numpy as np
 import copy
 import hypothesis.strategies as st
@@ -85,3 +86,39 @@ def test_hashing_of_artifacts_and_proxies(repo):
 
     # Proxies and values should have the same hash
     assert hash(original_proxy) == hash(original_artifact.value)
+
+def test_hashing_with_artifact_id_hasher_also_returns_set_of_artifact_ids_preserves_hash(repo):
+
+    @p.provenance()
+    def load_data():
+        return [1, 2, 3]
+
+    @p.provenance()
+    def create_composite(data):
+        return {'foo': 'bar', 'data': data}
+
+    data = load_data()
+
+    original_proxy = create_composite(data)
+    original_artifact = original_proxy.artifact
+    loaded_artifact = repo.get_by_id(original_artifact.id)
+    loaded_proxy = loaded_artifact.proxy()
+
+    expected_proxy_ids = frozenset((original_artifact.id, data.artifact.id))
+    expected_artifact_ids = frozenset((original_artifact.id,))
+
+    original_proxy_hash, ids = hash(original_proxy, hasher=ah.artifact_id_hasher())
+    assert original_proxy_hash == hash(original_proxy)
+    assert ids == expected_proxy_ids
+
+    original_artifact_hash, ids = hash(original_artifact, hasher=ah.artifact_id_hasher())
+    assert original_artifact_hash == hash(original_artifact)
+    assert ids == expected_artifact_ids
+
+    loaded_artifact_hash, ids = hash(loaded_artifact, hasher=ah.artifact_id_hasher())
+    assert loaded_artifact_hash == hash(loaded_artifact)
+    assert ids == expected_artifact_ids
+
+    loaded_proxy_hash, ids = hash(loaded_proxy, hasher=ah.artifact_id_hasher())
+    assert loaded_proxy_hash == hash(loaded_proxy)
+    assert ids == expected_proxy_ids
