@@ -1,26 +1,52 @@
-from collections import namedtuple
 import copy
-from datetime import datetime
 import json
-from memoized_property import memoized_property
+import multiprocessing
+import operator as ops
+import os
+import platform
+from collections import namedtuple
+from contextlib import contextmanager
+from datetime import datetime
+
+import numpy as np
+import psutil
 import sqlalchemy
+import sqlalchemy.dialects.postgresql as pg
 import sqlalchemy.orm
 import toolz as t
 import wrapt
-import operator as ops
-import os
-from contextlib import contextmanager
-import numpy as np
+from memoized_property import memoized_property
 
-from .compatibility import string_type
-from .hashing import value_repr, hash
+from . import _commonstore as cs
 from . import models as db
 from . import serializers as s
 from . import utils
-from . import _commonstore as cs
+from .compatibility import string_type
+from .hashing import hash, value_repr
 
 
-class Registry(object):
+def _host_info():
+    return {'machine': platform.machine(),
+            'nodename': platform.node(),
+            'platform': platform.platform(),
+            'processor': platform.processor(),
+            'cpu_count': multiprocessing.cpu_count(),
+            'release': platform.release(),
+            'system': platform.system(),
+            'version': platform.version()}
+
+
+def _process_info():
+    pid = os.getpid()
+    p = psutil.Process(pid)
+    return {'cmdline': p.cmdline(),
+            'cwd': p.cwd(),
+            'exe': p.exe(),
+            'name': p.name(),
+            'num_fds': p.num_fds(),
+            'num_threads': p.num_threads()}
+
+class Config(object):
 
     _current = None
 
@@ -32,10 +58,12 @@ class Registry(object):
     def set_current(cls, registry):
         cls._current = registry
 
-    def __init__(self, blobstores, repos, default_repo):
+    def __init__(self, blobstores, repos, default_repo, run_info_fn=None):
         self.blobstores = blobstores
         self.repos = repos
         self.set_default_repo(default_repo)
+        self._run_info = None
+        self.run_info_fn = run_info_fn or t.identity
 
     def set_default_repo(self, repo):
         if isinstance(repo, string_type):
@@ -45,16 +73,33 @@ class Registry(object):
         else:
             self.default_repo = repo
 
+    def set_run_info_fn(self, fn):
+        self.run_info_fn = fn or t.identity
+        self._run_info = None
 
-Registry.set_current(Registry({}, {}, None))
+    def run_info(self):
+        if self._run_info is None:
+            run_info = self.run_info_fn(
+                {'host': _host_info(), 'process': _process_info(),
+                 'created_at': datetime.utcnow()})
+            run_info['id'] = hash(run_info)
+            self._run_info = run_info
+        return self._run_info
+
+
+Config.set_current(Config({}, {}, None))
 
 
 def set_default_repo(repo_or_name):
-    Registry.current().set_default_repo(repo_or_name)
+    Config.current().set_default_repo(repo_or_name)
 
 
 def get_default_repo():
-    return Registry.current().default_repo
+    return Config.current().default_repo
+
+
+def set_run_info_fn(fn):
+    Config.current().set_run_info_fn(fn)
 
 
 @contextmanager
@@ -171,20 +216,20 @@ def is_proxy(obj):
             type(obj) == CallableArtifactProxy)
 
 
+
 class Artifact(object):
-    def __init__(self, repo, props, value=None, inputs=None):
+    def __init__(self, repo, props, value=None, inputs=None, run_info=None):
         assert ('id' in props), "props must contain 'id'"
         assert ('value_id' in props), "props must contain 'value_id'"
         self.__dict__ = props.copy()
-
         self.repo = repo
 
-        # TODO: This means that None as an artifact cannot have
-        # the value preloaded (which might not be a big deal)
         if value is not None:
             self._value = value
         if inputs is not None:
             self._inputs = inputs
+        if run_info is not None:
+            self._run_info = run_info
 
     @memoized_property
     def value(self):
@@ -193,6 +238,10 @@ class Artifact(object):
     @memoized_property
     def inputs(self):
         return self.repo.get_inputs(self)
+
+    @memoized_property
+    def run_info(self):
+        return self.repo.run_info(self.id)
 
     def proxy(self):
         if self.composite:
@@ -238,8 +287,11 @@ def _artifact_id(artifact_or_id):
 def _artifact_from_record(repo, record):
     if isinstance(record, Artifact):
         return record
-    return Artifact(repo, t.dissoc(record._asdict(), 'value', 'inputs'),
-                    record.value, record.inputs)
+    return Artifact(repo,
+                    t.dissoc(record._asdict(), 'value', 'inputs', 'run_info'),
+                    value=record.value, inputs=record.inputs,
+                    run_info=record.run_info)
+
 
 
 class ArtifactRepository(object):
@@ -463,6 +515,7 @@ class PostgresRepo(ArtifactRepository):
         super(PostgresRepo, self).__init__(read=read, write=write,
                                            read_through_write=read_through_write,
                                            delete=delete)
+        self._run = None
         if isinstance(db, string_type):
             self._sessionmaker = self._create_sessionmaker(db)
         else:
@@ -501,6 +554,17 @@ class PostgresRepo(ArtifactRepository):
         with self.session() as s:
             return s.query(db.Artifact).filter(db.Artifact.id == artifact_id).count() > 0
 
+    def _upsert_run(self, session, info):
+        sql = pg.insert(db.Run).values(
+            id=info['id'], info=info,
+            hostname=info['host']['nodename'],
+            created_at=info['created_at']
+        ).on_conflict_do_nothing(index_elements=['id'])
+
+        session.execute(sql)
+
+        return db.Run(info)
+
     def put(self, artifact_record, read_through=False):
         with self.session() as session:
             cs.ensure_put(self, artifact_record.id, read_through)
@@ -510,8 +574,9 @@ class PostgresRepo(ArtifactRepository):
                                s.serializer(artifact_record))
 
             inputs_json = _inputs_json(artifact_record.inputs)
+            run = self._upsert_run(session, artifact_record.run_info)
+            db_artifact = db.Artifact(artifact_record, inputs_json, run)
 
-            db_artifact = db.Artifact(artifact_record, inputs_json)
             session.add(db_artifact)
             session.commit()
 
@@ -630,6 +695,15 @@ class PostgresRepo(ArtifactRepository):
 
         if num_deleted == 0:
             raise KeyError(set_id, self)
+
+    def run_info(self, artifact_id):
+        with self.session() as session:
+            result = (session.query(db.Run)
+                      .filter(db.Run.id == db.Artifact.run_id)
+                      .filter(db.Artifact.id == artifact_id)
+                      .first())
+            return result.info_with_datetimes
+
 
 DbRepo = PostgresRepo
 
