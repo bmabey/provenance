@@ -54,7 +54,7 @@ release: dist
 	twine upload dist/*
 
 dist: clean
-	python setup.py sdist bdist_wheel
+	python setup.py sdist
 	ls -l dist
 
 install: clean
