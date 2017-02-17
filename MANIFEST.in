@@ -2,6 +2,8 @@ recursive-include provenance *.py
 recursive-include docs *.rst
 
 include setup.py
+include requirements.txt
+include test_requirements.txt
 include README.rst
 include LICENSE.txt
 include HISTORY.rst
