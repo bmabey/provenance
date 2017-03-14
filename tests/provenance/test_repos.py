@@ -1,9 +1,12 @@
 from datetime import datetime
+
+import pandas as pd
 import pytest
+import sqlalchemy_utils.functions as sql_utils
 
 import provenance as p
-import provenance.blobstores as bs
 import provenance._commonstore as cs
+import provenance.blobstores as bs
 import provenance.repos as r
 from conftest import artifact_record
 
@@ -248,3 +251,90 @@ def test_chained_writes_may_be_allowed_on_read_throughs_only():
     assert 'bar' in chained_repo
     assert 'bar' not in read_through_write_only_repo
     assert 'bar' in write_repo
+
+
+def test_db_is_automatically_created_and_migrated(disk_store):
+    db_conn_str = 'postgresql://localhost/test_provenance_autocreate'
+    if sql_utils.database_exists(db_conn_str):
+        sql_utils.drop_database(db_conn_str)
+
+
+    repo = r.PostgresRepo(db_conn_str, disk_store,
+                          read=True, write=True, delete=True,
+                          create_db=True)
+    p.set_default_repo(repo)
+
+    @p.provenance()
+    def calculate(a, b):
+        return a + b
+
+    assert sql_utils.database_exists(db_conn_str)
+
+    # make sure it all works
+    assert calculate(1, 2) == 3
+
+    p.set_default_repo(None)
+    sql_utils.drop_database(db_conn_str)
+
+
+
+def test_db_is_automatically_created_and_migrated_with_the_right_schema(disk_store):
+    db_conn_str = 'postgresql://localhost/test_provenance_autocreate_schema'
+    if sql_utils.database_exists(db_conn_str):
+        sql_utils.drop_database(db_conn_str)
+
+
+    repo = r.PostgresRepo(db_conn_str, disk_store,
+                          read=True, write=True, delete=True,
+                          create_db=True, schema='foobar')
+    p.set_default_repo(repo)
+
+    @p.provenance()
+    def calculate(a, b):
+        return a + b
+
+    assert calculate(1, 2) == 3
+
+    with repo.session() as s:
+        res = pd.read_sql("select * from foobar.artifacts", s.connection())
+
+
+    repo2 = r.PostgresRepo(db_conn_str, disk_store,
+                          read=True, write=True, delete=True,
+                           create_db=True, schema='baz')
+
+    p.set_default_repo(repo2)
+
+    assert calculate(5, 5) == 10
+
+    with repo2.session() as s:
+        res = pd.read_sql("select * from baz.artifacts", s.connection())
+
+    assert res.iloc[0]['inputs_json'] == {'b': 5 , 'a': 5, '__varargs': []}
+
+    p.set_default_repo(None)
+    sql_utils.drop_database(db_conn_str)
+
+
+def xtest_db_is_automatically_migrated(disk_store):
+    db_conn_str = 'postgresql://localhost/test_provenance_automigrate'
+    if sql_utils.database_exists(db_conn_str):
+        sql_utils.drop_database(db_conn_str)
+
+    sql_utils.create_database(db_conn_str)
+
+
+    repo = r.PostgresRepo(db_conn_str, disk_store,
+                          read=True, write=True, delete=True,
+                          create_db=False, upgrade_db=True)
+    p.set_default_repo(repo)
+
+    @p.provenance()
+    def calculate(a, b):
+        return a + b
+
+    # make sure it all works
+    assert calculate(1, 2) == 3
+
+    p.set_default_repo(None)
+    sql_utils.drop_database(db_conn_str)

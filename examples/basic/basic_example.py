@@ -2,6 +2,7 @@
 
 import provenance as p
 
+
 p.load_config({'blobstores':
                {'disk': {'type': 'disk',
                          'cachedir': 'artifacts',
@@ -15,6 +16,7 @@ p.load_config({'blobstores':
                           'store': 'disk',
                           'read': True,
                           'write': True,
+                          'create_db': True,
                           'read_through_write': False,
                           'delete': True}},
                'default_repo': 'local'})

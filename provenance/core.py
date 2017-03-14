@@ -373,6 +373,7 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
 
     return wrapped
 
+
 class ArchivedFile(object):
     def __init__(self, id, original_filename=None, in_repo=True):
         self.blob_id = id

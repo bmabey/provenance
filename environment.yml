@@ -1,9 +1,12 @@
 name: provenance-dev
+channels:
+    - conda-forge
 dependencies:
 - python==3.5
 - ipython
 - numpy
 - pandas
+- alembic
 - pip:
   - versioneer
   - twine
