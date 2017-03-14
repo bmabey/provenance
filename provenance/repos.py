@@ -90,16 +90,20 @@ class Config(object):
 Config.set_current(Config({}, {}, None))
 
 
+def current_config():
+    return Config.current()
+
+
 def set_default_repo(repo_or_name):
-    Config.current().set_default_repo(repo_or_name)
+    current_config().set_default_repo(repo_or_name)
 
 
 def get_default_repo():
-    return Config.current().default_repo
+    return current_config().default_repo
 
 
 def set_run_info_fn(fn):
-    Config.current().set_run_info_fn(fn)
+    current_config().set_run_info_fn(fn)
 
 
 @contextmanager
