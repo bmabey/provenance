@@ -54,8 +54,6 @@ class Artifact(Base):
     computed_at = sa.Column(pg.TIMESTAMP)
     added_at = sa.Column(pg.TIMESTAMP, default=datetime.utcnow)
 
-    host = sa.Column(pg.JSONB)
-    process = sa.Column(pg.JSONB)
     input_artifact_ids = sa.Column(pg.ARRAY(pg.VARCHAR(SHA1_LENGTH)))
     inputs_json = sa.orm.deferred(sa.Column(pg.JSONB))
     serializer = sa.Column(pg.VARCHAR(128), default='joblib')
