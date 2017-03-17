@@ -55,15 +55,15 @@ Assuming you have conda installed, the following commands can be used to create 
 
 Initial environment creation
 
-```bash
-conda env create
-source activate provenance-dev
-pip install -r requirements.txt
-pip install -r test_requirements.txt
-```
+.. code:: bash
+
+    conda env create
+    source activate provenance-dev
+    pip install -r requirements.txt
+    pip install -r test_requirements.txt
 
 Reactivating the environment after it has been created
 
-```bash
-source activate provenance-dev
-```
+.. code:: bash
+
+    source activate provenance-dev
