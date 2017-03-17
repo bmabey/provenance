@@ -11,14 +11,23 @@ from datetime import datetime
 import numpy as np
 import psutil
 import sqlalchemy
+from sqlalchemy.schema import CreateSchema
+import sqlalchemy.sql as sa
 import sqlalchemy.dialects.postgresql as pg
 import sqlalchemy.orm
 import toolz as t
 import wrapt
+from alembic import command
+from alembic.config import Config as AlembicConfig
+from alembic import context as alembic_context
+from alembic.migration import MigrationContext
+
+import sqlalchemy_utils.functions as sql_utils
 from memoized_property import memoized_property
 
 from . import _commonstore as cs
 from . import models as db
+from . import models
 from . import serializers as s
 from . import utils
 from .compatibility import string_type
@@ -45,6 +54,21 @@ def _process_info():
             'name': p.name(),
             'num_fds': p.num_fds(),
             'num_threads': p.num_threads()}
+
+
+def _alembic_config(connection):
+    root = t.pipe(__file__, os.path.realpath, os.path.dirname)
+    config = AlembicConfig(os.path.join(root, 'alembic.ini'))
+    config.set_main_option('script_location',
+                           os.path.join(root, 'migrations'))
+    config.attributes['connection'] = connection
+    return config
+
+
+def _create_db_if_needed(db_conn_str):
+    if not sql_utils.database_exists(db_conn_str):
+        sql_utils.create_database(db_conn_str)
+
 
 class Config(object):
 
@@ -477,6 +501,23 @@ def _check_pid(dbapi_connection, connection_record, connection_proxy):
             "attempting to check out in pid %s" %
             (connection_record.info['pid'], pid))
 
+@t.curry
+def _set_search_path(schema, dbapi_connection, connection_record, connection_proxy):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("SET search_path TO {};".format(schema))
+    dbapi_connection.commit()
+    cursor.close()
+
+
+def _db_engine(conn_string, schema):
+    db_engine = sqlalchemy.create_engine(conn_string, json_serializer=Encoder().encode)
+    sqlalchemy.event.listens_for(db_engine, "engine_connect")(_ping_postgres)
+    sqlalchemy.event.listens_for(db_engine, "connect")(_record_pid)
+    sqlalchemy.event.listens_for(db_engine, "checkout")(_check_pid)
+    if schema:
+        sqlalchemy.event.listens_for(db_engine, "checkout")(_set_search_path(schema))
+    return db_engine
+
 
 def _insert_set_members_sql(artifact_set):
     pairs = [(artifact_set.id, id) for id in artifact_set.artifact_ids]
@@ -514,16 +555,52 @@ class Encoder(json.JSONEncoder):
 
 
 class PostgresRepo(ArtifactRepository):
+    # TODO: add the upgrade_db param back once upgrade is working
+    # upgrade_db=True
     def __init__(self, db, store,
-                 read=True, write=True, read_through_write=True, delete=True):
+                 read=True, write=True, read_through_write=True, delete=True,
+                 create_db=False, schema=None, create_schema=True):
+        upgrade_db=False
         super(PostgresRepo, self).__init__(read=read, write=write,
                                            read_through_write=read_through_write,
                                            delete=delete)
+       
+        if not isinstance(db, string_type) and schema is not None:
+            raise ValueError("You can only provide a schema with a DB url.")
+
+        init_db = False
+        if create_db and isinstance(db, string_type):
+            _create_db_if_needed(db)
+            init_db = True
+            upgrade_db = False
+
         self._run = None
         if isinstance(db, string_type):
-            self._sessionmaker = self._create_sessionmaker(db)
+            if create_db:
+                    init_db = True
+
+            self._db_engine = _db_engine(db, schema)
+            self._sessionmaker = sqlalchemy.orm.sessionmaker(bind=self._db_engine)
         else:
             self._session = db
+
+
+        if create_schema and schema is not None:
+            with self.session() as session:
+                q = sa.exists(sa.select([("schema_name")]).select_from(sa.text("information_schema.schemata"))
+                              .where(sa.text("schema_name = :schema")
+                                     .bindparams(schema=schema)))
+                if not session.query(q).scalar():
+                    session.execute(CreateSchema(schema))
+                    session.commit()
+                    init_db = True
+                    upgrade_db = False
+
+        if init_db:
+            self._db_init()
+
+        if upgrade_db:
+            self._db_upgrade()
 
         self.blobstore = store
 
@@ -545,12 +622,6 @@ class PostgresRepo(ArtifactRepository):
                 self._session.close()
                 del self._session
 
-    def _create_sessionmaker(self, conn_string):
-        db_engine = sqlalchemy.create_engine(conn_string, json_serializer=Encoder().encode)
-        sqlalchemy.event.listens_for(db_engine, "engine_connect")(_ping_postgres)
-        sqlalchemy.event.listens_for(db_engine, "connect")(_record_pid)
-        sqlalchemy.event.listens_for(db_engine, "checkout")(_check_pid)
-        return sqlalchemy.orm.sessionmaker(bind=db_engine)
 
     def __contains__(self, artifact_or_id):
         cs.ensure_contains(self)
@@ -568,6 +639,29 @@ class PostgresRepo(ArtifactRepository):
         session.execute(sql)
 
         return db.Run(info)
+
+
+    @property
+    def db_revision(self):
+        with self.session() as session:
+            context = MigrationContext.configure(session.connection())
+            return context.get_current_revision()
+
+    def _db_init(self):
+        db.Base.metadata.create_all(self._db_engine)
+        with self.session() as session:
+            conn = session.connection()
+            # the below doesn't work for some reason
+            # db.Base.metadata.create_all(conn)
+            cfg = _alembic_config(conn)
+            command.stamp(cfg, "head")
+
+    def _db_upgrade(self):
+        with self.session() as session:
+            conn = session.connection()
+            cfg = _alembic_config(conn)
+            command.upgrade(cfg, "head")
+
 
     def put(self, artifact_record, read_through=False):
         with self.session() as session:
