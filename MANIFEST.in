@@ -2,6 +2,7 @@ recursive-include provenance *.py
 recursive-include docs *.rst
 include provenance/migrations/*
 include provenance/migrations/versions/*
+inclue provenance/alembic.ini
 
 include setup.py
 include requirements.txt
