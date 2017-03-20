@@ -2,7 +2,7 @@
 ## Step 1: Run some stuff
 
 All you do is `conda env create`, `source activate provenance-basic-example`,
-`./start_script.sh`, and `./basic_example.py`.
+and `./basic_example.py`.
 
 Then you can explore how the artifacts were saved in `./artifacts` and in `psql
 provenance-basic-example`.
@@ -78,7 +78,7 @@ read, write, read\_through\_right, and delete. We then define Our artifact\_repo
 is called 'local', this name is again up to you. It is of type 'postgres'. The
 possible types are postgres, memory, and chained. Again our db is defined as
 discussed earlier. The read, write, read\_through\_write, and delete fields in
-the config of both the blobstore and artifact_repo are boolean permissions. Am I
+the config of both the blobstore and artifact\_repo are boolean permissions. Am I
 allowed to read, write, or delete from this blobstore or artifact\_repo? The
 read\_through\_write is concerned with chained blobstores and artifact_repos and
 we'll continue to hold off discussing that.
