@@ -1,5 +1,5 @@
 name: provenance-basic-example
 dependencies:
-  - python
-  - pip:
-    - provenance
+- python==3.5
+- pip:
+  - "git+https://github.com/bmabey/provenance.git"
