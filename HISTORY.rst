@@ -4,7 +4,7 @@ History
 -------
 
 
-0.9.4 (2016-03-22)
+0.9.4.1 (2016-03-22) (0.9.4 was a bad release)
 ---------------------
 
 * Adds ability for a database and/or schema to be created when it doesn't exist.
