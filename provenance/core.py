@@ -3,6 +3,7 @@ import os
 import shutil
 import time
 from collections import namedtuple
+from copy import copy
 
 import toolz as t
 from boltons import funcutils as bfu
@@ -49,7 +50,6 @@ def fn_info(f):
     info['archive_file'] = metadata['archive_file']
     info['custom_fields'] = metadata['custom_fields']
     info['preserve_file_ext'] = metadata['preserve_file_ext']
-
     if info['composite']:
         if info['archive_file']:
             raise NotImplementedError("Using 'composite' and 'archive_file' is not supported.")
@@ -120,7 +120,7 @@ def composite_artifact(repo, _run_info, inputs, input_hashes, input_artifact_ids
                        input_hash_fn, artifact_info, compute_duration,
                        computed_at, key, value):
     start_hash_time = time.time()
-    info = artifact_info.copy()
+    info = copy(artifact_info))
     info['composite'] = False
     info['name'] = '{}_{}'.format(info['name'], key)
     info['serializer'] = info['serializer'].get(key, DEFAULT_VALUE_SERIALIZER.name)
@@ -133,6 +133,7 @@ def composite_artifact(repo, _run_info, inputs, input_hashes, input_artifact_ids
     start_value_id_time = time.time()
     value_id = hash(value)
     value_id_duration = time.time() - start_hash_time
+
 
     record = ArtifactRecord(id=id, value_id=value_id, value=value,
                             input_artifact_ids=input_artifact_ids,
@@ -195,8 +196,10 @@ def provenance_wrapper(repo, f):
                      'dump_kwargs': func_info['dump_kwargs'],
                      'composite': func_info['composite']}
 
+
     @bfu.wraps(f)
     def _provenance_wrapper(*args, **kargs):
+        artifact_info_ = copy(artifact_info)
         r = repos.get_default_repo() if repo is None else repo
         _run_info = run_info()
         archive_file = func_info['archive_file']
@@ -246,16 +249,16 @@ def provenance_wrapper(repo, f):
                     func_info['module'], func_info['name'], ",".join(modified_inputs))
                 raise ImpureFunctionError(msg)
 
-            if artifact_info['composite']:
+            if artifact_info_['composite']:
                 input_hash_fn = func_info['identifiers']['input_hash_fn']
                 ca = composite_artifact(r, _run_info, inputs, input_hashes,
                                         input_artifact_ids, input_hash_fn,
                                         artifact_info, compute_duration,
                                         computed_at)
                 value = {k: ca(k, v) for k, v in value.items()}
-                artifact_info['serializer'] = DEFAULT_VALUE_SERIALIZER.name
-                artifact_info['load_kwargs'] = None
-                artifact_info['dump_kwargs'] = None
+                artifact_info_['serializer'] = DEFAULT_VALUE_SERIALIZER.name
+                artifact_info_['load_kwargs'] = None
+                artifact_info_['dump_kwargs'] = None
 
 
             start_value_id_time = time.time()
@@ -274,7 +277,7 @@ def provenance_wrapper(repo, f):
                                     compute_duration=compute_duration,
                                     hash_duration=hash_duration,
                                     computed_at=computed_at, run_info=_run_info,
-                                    inputs=inputs, **artifact_info)
+                                    inputs=inputs, **artifact_info_)
             artifact = r.put(record)
 
             if archive_file:
