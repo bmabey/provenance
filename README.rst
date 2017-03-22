@@ -2,8 +2,8 @@
 provenance
 ==========
 
-.. image:: https://travis-ci.org/Savvysherpa/provenance.svg?branch=master
-    :target: https://travis-ci.org/Savvysherpa/provenance
+.. image:: https://travis-ci.org/bmabey/provenance.svg?branch=master
+    :target: https://travis-ci.org/bmabey/provenance
 
 provenance is a Python library for function-level provenance. By decorating
 functions you are able to cache the results, i.e. artifacts, to memory, disk, or S3.
