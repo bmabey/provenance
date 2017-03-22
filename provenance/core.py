@@ -120,7 +120,7 @@ def composite_artifact(repo, _run_info, inputs, input_hashes, input_artifact_ids
                        input_hash_fn, artifact_info, compute_duration,
                        computed_at, key, value):
     start_hash_time = time.time()
-    info = copy(artifact_info))
+    info = copy(artifact_info)
     info['composite'] = False
     info['name'] = '{}_{}'.format(info['name'], key)
     info['serializer'] = info['serializer'].get(key, DEFAULT_VALUE_SERIALIZER.name)
