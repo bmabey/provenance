@@ -3,6 +3,10 @@
 History
 -------
 
+0.9.4.2 (2016-03-23)
+---------------------
+
+* Improved error reporing when paramiko not present for SFTP store.
 
 0.9.4.1 (2016-03-22) (0.9.4 was a bad release)
 ---------------------
