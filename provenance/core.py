@@ -332,6 +332,85 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
                returns_composite=False, custom_fields=None,
                serializer=None, load_kwargs=None, dump_kwargs=None,
                _provenance_wrapper=provenance_wrapper):
+    """
+    Decorates a function so that all inputs and outputs are cached. Wraps the return
+    value in a proxy that has an artifact attached to it allowing for the provenance
+    to be tracked.
+
+
+    Parameters
+    ----------
+    version : int
+        Version of the code that is computing the value. You should increment this
+    number when anything that has changed to make a previous version of an artifact
+    outdated. This could be the function itself changing, other functions or libraries
+    that it calls has changed, or an underlying data source that is being queried has
+    updated data.
+
+    repo : Repository
+        Which repo this artifact should be saved in. The default repo is used when
+    none is provided and this is the recommended approach (i.e. don't use this param!)
+
+    name : str
+       The name of the artifact of the function being wrapped. If not provided it
+    defaults to the function name (without the module).
+
+    returns_composite : bool
+       When set to True the function should return a dictionary. Each value of the
+    returned dict will be serialized as an independent artifact. When the composite
+    artifact is returned as a cached value it will be a dict-like object that will
+    lazily pull back the artifacts as requested. You should use this when you need
+    multiple artifacts created atomically but you do not want to fetch all the them
+    simultaneously. That way you can lazily load only the artifacts you need.
+
+    serializer : str
+       The name of the serializer you want to use for this artifact. The built-in
+    ones are 'joblib' (the default) and 'cloudpickle'. 'joblib' is optimized for
+    numpy while 'cloudpickle' can serialize functions and other objects the standard
+    python (and joblib) pickler cannot. You can also register your own serializer
+    via the provenance.register_serializer function.
+
+    dump_kwargs : dict
+       A dict of kwargs to be passed to the serializer when dumping artifacts
+    associated with this function. This is rarely used.
+
+    load_kwargs : dict
+       A dict of kwargs to be passed to the serializer when loading artifacts
+    associated with this function. This is rarely used.
+
+    ignore : list, tuple, or set
+       A list of parameters that should be ignored when computing the input hash.
+    This way you can mark certain parameters as invariant to the computed result.
+    An example of this would be a parameter indicating how many cores should be
+    used to compute a result. If the result is invariant the number of cores you
+    would want to ignore it so the value isn't recomputed when a different number
+    of cores is used.
+
+    merge_defaults : bool or list of parameters to be merged
+       When True then the wrapper introspects the argspec of the function being
+    decorated to see what keyword arguments have default dictionary values. When
+    a list of strings the list is taken to be the list of parameters you want to
+    merge on.
+    When a decorated function is called then the dictionary passed in as an
+    argument is merged with the default dictionary. That way people only need
+    to specify the keys they are overriding and don't have to specify all the
+    default values in the default dictionary.
+
+    TODO: add an example inline.. for now see the tests for examples
+
+    TODO: document the remaining parameters
+       
+
+    Returns
+    -------
+    proxy object
+        Returns the value of the decorated function as a proxy. The proxy
+    will act exactly like the original object/value but will have an
+    artifact method that returns the Artifact associated with the value.
+    This wrapped value should be used with all other functions that are wrapped
+    with the provenance decorator as it will help track the provenance and also
+    reduce redundant storage of a given value.
+    """
     if ignore and input_hash_fn:
         raise ValueError("You cannot provide both ignore and input_hash_fn")
 
