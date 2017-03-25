@@ -386,6 +386,28 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
     would want to ignore it so the value isn't recomputed when a different number
     of cores is used.
 
+    remove : list, tuple, or set
+       A list of parameters that should be removed prior to hashing and saving
+    of the inputs. The distinction between this and the ignore parameter is
+    that with the ignore the parameters the ignored parameters are still recorded.
+    The motivation to not-record, i.e. remove, certain parameters usually driven
+    by performance or storage considerations.
+
+    input_hash_fn : function
+        A function that takes a dict of all on the argument's hashes with the
+    structure of {'kargs': {'param_a': '1234hash'}, 'varargs': ('deadbeef',..)}.
+    It should return a dict of the same shape but is able to change this dict
+    as needed.  The main use case for this function is overshadowed by the
+    ignore parameter and so this parameter is hardly ever used.
+
+    input_process_fn : function
+        A function that pre-processes the function's inputs before they are hashed
+    or saved. The function takes a dict of all on the functions arguments with the
+    structure of {'kargs': {'param_a': 42}, 'varargs': (100,..)}.
+    It should return a dict of the same shape but is able to change this dict
+    as needed.  The main use case for this function is overshadowed by the
+    remove parameter and the value_repr function. 
+
     merge_defaults : bool or list of parameters to be merged
        When True then the wrapper introspects the argspec of the function being
     decorated to see what keyword arguments have default dictionary values. When
@@ -398,8 +420,24 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
 
     TODO: add an example inline.. for now see the tests for examples
 
-    TODO: document the remaining parameters
-       
+    archive_file : bool, defaults False
+       When True then the return value of the wrapped function will be assumed to
+    be a str or pathlike that represents a file that should be archived into
+    the blobstore. This is a good option to use when the computation of a function
+    can't easily be returned as an in-memory pickle-able python value.
+
+    delete_original_file : bool, defaults False
+       To be used in conjunction with archive_file=True, when delete_original_file
+    is True then the returned file will be deleted after it has been archived.
+
+    preserve_file_ext : bool, default False
+       To be used in conjunction with archive_file=True, when preserve_file_ext is
+    True then id of the artifact archived will be the hash of the file contents
+    plus the file extension of the original file. The motivation of setting this to
+    True would be if you wanted to be able to look at the contents of a blobstore
+    on disk and being able to preview the contents of an artifact with your
+    regular OS tools (e.g. viewing images or videos).
+
 
     Returns
     -------
