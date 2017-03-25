@@ -502,7 +502,7 @@ class ArchivedFile(object):
 
     def abspath(self):
         repo = repos.get_default_repo()
-        path = repo.blobstore._filename(self.blob_id)
+        path = repo._filename(self.blob_id)
         return os.path.abspath(path)
 
     def __fspath__(self):

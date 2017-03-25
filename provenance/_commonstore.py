@@ -30,6 +30,11 @@ class InconsistentKeyError(Exception):
         Exception.__init__(self, msg)
 
 
+def find_first(pred, seq):
+    for i in seq:
+        if pred(i):
+            return i
+
 def ensure_read(obj, action='get'):
     if not obj._read:
         raise PermissionError(action, obj, 'read')
@@ -134,3 +139,18 @@ def chained_delete(chained, id, delete=None, contains=op.contains):
         raise KeyError(id, chained)
     else:
         return foundin
+
+
+def chained_filename(chained, id):
+    if id in chained.stores:
+        def valid_store(s):
+            return (s._read and
+                    hasattr(s, '_filename') and
+                    id in s)
+
+        store = find_first(valid_store, chained.stores)
+
+        if store is not None:
+            return store._filename(id)
+        else:
+            raise Exception("You do not have a disk-based store setup.")

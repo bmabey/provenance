@@ -26,6 +26,7 @@ import sqlalchemy_utils.functions as sql_utils
 from memoized_property import memoized_property
 
 from . import _commonstore as cs
+from ._commonstore import find_first
 from . import models as db
 from . import models
 from . import serializers as s
@@ -338,12 +339,6 @@ class ArtifactRepository(object):
         return [self.get_by_id(id) for id in artifact_ids]
 
 
-def _find_first(pred, seq):
-    for i in seq:
-        if pred(i):
-            return i
-
-
 class MemoryRepo(ArtifactRepository):
     def __init__(self, artifacts=None,
                  read=True, write=True, read_through_write=True, delete=True):
@@ -356,7 +351,7 @@ class MemoryRepo(ArtifactRepository):
     def __contains__(self, artifact_or_id):
         cs.ensure_contains(self)
         artifact_id = _artifact_id(artifact_or_id)
-        if _find_first(lambda a: a.id == artifact_id, self.artifacts):
+        if find_first(lambda a: a.id == artifact_id, self.artifacts):
             return True
         else:
             return False
@@ -369,7 +364,7 @@ class MemoryRepo(ArtifactRepository):
 
     def get_by_id(self, artifact_id):
         cs.ensure_read(self)
-        record = _find_first(lambda a: a.id == artifact_id, self.artifacts)
+        record = find_first(lambda a: a.id == artifact_id, self.artifacts)
         if record:
             return _artifact_from_record(self, record)
         else:
@@ -377,7 +372,7 @@ class MemoryRepo(ArtifactRepository):
 
     def get_by_value_id(self, value_id):
         cs.ensure_read(self)
-        record = _find_first(lambda a: a.value_id == value_id, self.artifacts)
+        record = find_first(lambda a: a.value_id == value_id, self.artifacts)
         if record:
             return _artifact_from_record(self, record)
         else:
@@ -385,11 +380,11 @@ class MemoryRepo(ArtifactRepository):
 
     def get_value(self, artifact, composite=False):
         cs.ensure_read(self)
-        return _find_first(lambda a: a.id == artifact.id, self.artifacts).value
+        return find_first(lambda a: a.id == artifact.id, self.artifacts).value
 
     def get_inputs(self, artifact):
         cs.ensure_read(self)
-        return _find_first(lambda a: a.id == artifact.id, self.artifacts).inputs
+        return find_first(lambda a: a.id == artifact.id, self.artifacts).inputs
 
     def delete(self, artifact_or_id):
         artifact_id = _artifact_id(artifact_or_id)
@@ -402,12 +397,12 @@ class MemoryRepo(ArtifactRepository):
             self.artifacts = new_artifacts
 
     def contains_set(self, set_id):
-        art_set = _find_first(lambda s: s.id == set_id, self.sets)
+        art_set = find_first(lambda s: s.id == set_id, self.sets)
         return True if art_set else False
 
     def get_set_by_id(self, set_id):
         cs.ensure_read(self)
-        art_set = _find_first(lambda s: s.id == set_id, self.sets)
+        art_set = find_first(lambda s: s.id == set_id, self.sets)
         if not art_set:
             raise KeyError(self, set_id)
 
@@ -802,6 +797,9 @@ class PostgresRepo(ArtifactRepository):
                       .first())
             return result.info_with_datetimes
 
+    def _filename(self, artifact_id):
+        return self.blobstore._filename(artifact_id)
+
 
 DbRepo = PostgresRepo
 
@@ -874,6 +872,8 @@ class ChainedRepo(ArtifactRepository):
     def delete(self, id):
         return cs.chained_delete(self, id)
 
+    def _filename(self, id):
+        return cs.chained_filename(self, id)
 
 ### ArtifactSet logic
 
