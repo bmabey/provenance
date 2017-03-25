@@ -204,7 +204,9 @@ class ChainedStore(object):
     def _filename(self, id):
         if id in self:
             stores = [s for s in self.stores
-                      if s._read and hasattr(s, '_filename')]
+                      if s._read and
+                      hasattr(s, '_filename') and
+                      id in s]
             if stores:
                 return stores[0]._filename(id)
             else:
