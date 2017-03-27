@@ -194,8 +194,12 @@ class S3Store(BaseBlobStore):
         self.s3fs.rm(self._path(id))
 
 
-class ChainedStore(object):
-    def __init__(self, stores):
+class ChainedStore(BaseBlobStore):
+    def __init__(self, stores, read=True, write=True, read_through_write=True,
+                 delete=True, on_duplicate_key='skip'):
+        super(ChainedStore, self).__init__(
+            read=read, write=write, read_through_write=read_through_write,
+            delete=delete, on_duplicate_key=on_duplicate_key)
         self.stores = stores
 
     def __contains__(self, id):
@@ -204,8 +208,8 @@ class ChainedStore(object):
     def _filename(self, id):
         return cs.chained_filename(self, id)
 
-    def put(self, id, value, serializer=DEFAULT_VALUE_SERIALIZER):
-        return cs.chained_put(self, id, value,
+    def _put_overwrite(self, id, value, serializer, read_through):
+        return cs.chained_put(self, id, value, overwrite=True,
                               serializer=serializer)
 
     def get(self, id, serializer=DEFAULT_VALUE_SERIALIZER, **kargs):
