@@ -202,6 +202,18 @@ def _load_weights(weights, layers):
     K.batch_set_value(weight_value_tuples)
 
 
+REGISTERED_CUSTOM_OBJECTS = {}
+
+def register_custom_objects(mapping, merge=False):
+    if merge:
+        res = t.merge(REGISTERED_CUSTOM_OBJECTS, mapping)
+    else:
+        res = mapping
+
+    REGISTERED_CUSTOM_OBJECTS = res
+
+
+
 #TODO: move custom_objects into the attrs
 def load_model(attrs, custom_objects=None):
     """Loads a model saved via `reduce_model`.
@@ -222,6 +234,9 @@ def load_model(attrs, custom_objects=None):
     """
     if not custom_objects:
         custom_objects = {}
+
+    custom_objects = t.merge(REGISTERED_CUSTOM_OBJECTS,
+                             custom_objects)
 
     def convert_custom_objects(obj):
         """Handles custom object lookup.

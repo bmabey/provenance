@@ -404,24 +404,28 @@ def test_model_config_hash_repr_complex_models_and_custom_loss_function():
         'model_1', 'input_1', 'input_2', 'sequential_2', 'dense_1', 'lambda_1'
     ]
 
+def euclidean_distance(vects):
+    x, y = vects
+    return K.sqrt(K.sum(K.square(x - y), axis=1, keepdims=True))
 
-# TODO: handle custom_objects in the pickling
-def xtest_non_sequential_model_with_custom_loss(dbdiskrepo):
-    def euclidean_distance(vects):
-        x, y = vects
-        return K.sqrt(K.sum(K.square(x - y), axis=1, keepdims=True))
+def eucl_dist_output_shape(shapes):
+    shape1, shape2 = shapes
+    return (shape1[0], 1)
 
-    def eucl_dist_output_shape(shapes):
-        shape1, shape2 = shapes
-        return (shape1[0], 1)
+def contrastive_loss(y_true, y_pred):
+    '''Contrastive loss from Hadsell-et-al.'06
+    http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf
+    '''
+    margin = 1
+    return K.mean(y_true * K.square(y_pred) + (1 - y_true) * K.square(
+        K.maximum(margin - y_pred, 0)))
 
-    def contrastive_loss(y_true, y_pred):
-        '''Contrastive loss from Hadsell-et-al.'06
-        http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf
-        '''
-        margin = 1
-        return K.mean(y_true * K.square(y_pred) + (1 - y_true) * K.square(
-            K.maximum(margin - y_pred, 0)))
+
+def test_non_sequential_model_with_custom_loss(dbdiskrepo):
+
+    pk.register_custom_objects({'contrastive_loss': contrastive_loss,
+                                'eucl_dist_output_shape': eucl_dist_output_shape,
+                                'euclidean_distance': euclidean_distance})
 
     def create_pairs(x, digit_indices):
         '''Positive and negative pair creation.
