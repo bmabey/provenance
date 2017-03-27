@@ -76,7 +76,7 @@ def chained_contains(chained, id, contains=op.contains):
             return True
     return False
 
-def chained_put(chained, id, value, put=None, contains=op.contains, **kargs):
+def chained_put(chained, id, value, put=None, overwrite=False, contains=op.contains, **kargs):
     stores_with_write = [s for s in chained.stores if s._write]
     if len(stores_with_write) == 0:
         raise PermissionError('put', chained, 'write')
@@ -84,7 +84,7 @@ def chained_put(chained, id, value, put=None, contains=op.contains, **kargs):
     record = None
     putin = []
     for store in stores_with_write:
-        if not contains(store, id):
+        if overwrite or not contains(store, id):
             if put:
                 record = put(store, id, value, **kargs)
             else:
