@@ -142,7 +142,7 @@ def chained_delete(chained, id, delete=None, contains=op.contains):
 
 
 def chained_filename(chained, id):
-    if id in chained.stores:
+    if id in chained:
         def valid_store(s):
             return (s._read and
                     hasattr(s, '_filename') and
