@@ -436,8 +436,16 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
     to specify the keys they are overriding and don't have to specify all the
     default values in the default dictionary.
 
-    use_cache : bool
-        TODO: Write documentation for use_cache
+    use_cache : bool or None (default None)
+        use_cache False turns off the caching effects of the provenance decorator,
+    while still tracking the provenance of artifacts. This should only be used during
+    quick local iterations of a function to avoid having to bump the version with
+    each change. When set to None (the default) it defers to the global provenance
+    use_cache setting.
+
+    custom_fields : dict
+        A dict with types that serialize to json. These are saved for searching in
+    the repository.
 
     TODO: add an example inline.. for now see the tests for examples
 
