@@ -636,20 +636,50 @@ Offending names: {'foo': 2}
         p.lazy_proxy_dict([foo, foo2])
 
 
-def test_use_cache_false(repo):
-    @p.provenance(name='add_something', use_cache=False)
-    def add_one(x):
+def test_use_cache_true(repo):
+    @p.provenance()
+    def increase(x):
         return x + 1
 
-    @p.provenance(name='add_something', use_cache=False)
-    def add_two(x):
-        return x + 2
-
-    a = add_one(5)
+    a = increase(5)
     assert a == 6
 
-    b = add_two(5)
-    assert b == 7
+    # We expect the values and artifacts to be the same
+    b = increase(5)
+    assert b == 6
+    assert b.artifact.id == a.artifact.id
 
-    c = add_one(5)
+    # Changing a function definition without changing the version
+    # results in a stale cache
+    @p.provenance()
+    def increase(x):
+        return x + 2
+
+    c = increase(5)
+    assert c == 6
     assert c.artifact.id == a.artifact.id
+
+
+def test_use_cache_false(repo):
+    @p.provenance(use_cache=False)
+    def increase(x):
+        return x + 1
+
+    a = increase(5)
+    assert a == 6
+
+    # We expect the values and artifacts to be the same because the
+    # function hasn't changed
+    b = increase(5)
+    assert b == 6
+    assert b.artifact.id == a.artifact.id
+
+    # We can modify the function, but because we aren't using the caching
+    # we shouldn't get stale values
+    @p.provenance()
+    def increase(x):
+        return x + 2
+
+    c = increase(5)
+    assert c == 7
+    assert c.artifact.id != a.artifact.id
