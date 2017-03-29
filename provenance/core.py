@@ -50,6 +50,7 @@ def fn_info(f):
     info['archive_file'] = metadata['archive_file']
     info['custom_fields'] = metadata['custom_fields']
     info['preserve_file_ext'] = metadata['preserve_file_ext']
+    info['use_cache'] = metadata['use_cache']
     if info['composite']:
         if info['archive_file']:
             raise NotImplementedError("Using 'composite' and 'archive_file' is not supported.")
@@ -143,6 +144,7 @@ def composite_artifact(repo, _run_info, inputs, input_hashes, input_artifact_ids
                             inputs=inputs, run_info=_run_info, **info)
     return repo.put(record)
 
+
 def _base_fn(f):
     if utils.is_curry_func(f):
         return utils.inner_function(f)
@@ -204,6 +206,11 @@ def provenance_wrapper(repo, f):
         _run_info = run_info()
         archive_file = func_info['archive_file']
 
+        if func_info['use_cache'] is None:
+            use_cache = repos.get_use_cache()
+        else:
+            use_cache = func_info['use_cache']
+
         start_hash_time = time.time()
         varargs, argsd = extract_args(args, kargs)
         raw_inputs = {'varargs': varargs + func_info['varargs'],
@@ -223,9 +230,12 @@ def provenance_wrapper(repo, f):
         id = create_id(input_hashes, **func_info['identifiers'])
         hash_duration = time.time() - start_hash_time
 
-        try:
-            artifact = r.get_by_id(id)
-        except KeyError:
+        if use_cache:
+            try:
+                artifact = r.get_by_id(id)
+            except KeyError:
+                artifact = None
+        else:
             artifact = None
 
         if artifact is None:
@@ -271,14 +281,22 @@ def provenance_wrapper(repo, f):
                 value_id = hash(value)
             value_id_duration = time.time() - start_value_id_time
 
-            record = ArtifactRecord(id=id, value_id=value_id, value=value,
-                                    input_artifact_ids=input_artifact_ids,
-                                    value_id_duration=value_id_duration,
-                                    compute_duration=compute_duration,
-                                    hash_duration=hash_duration,
-                                    computed_at=computed_at, run_info=_run_info,
-                                    inputs=inputs, **artifact_info_)
-            artifact = r.put(record)
+            if not use_cache:
+                id = hash(id + value_id)
+                try:
+                    artifact = r.get_by_id(id)
+                except KeyError:
+                    artifact = None
+
+            if artifact is None:
+                record = ArtifactRecord(id=id, value_id=value_id, value=value,
+                                        input_artifact_ids=input_artifact_ids,
+                                        value_id_duration=value_id_duration,
+                                        compute_duration=compute_duration,
+                                        hash_duration=hash_duration,
+                                        computed_at=computed_at, run_info=_run_info,
+                                        inputs=inputs, **artifact_info_)
+                artifact = r.put(record)
 
             if archive_file:
                 # mark the file as in the repo (yucky, I know)
@@ -330,7 +348,7 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
                ignore=None, input_hash_fn=None, remove=None, input_process_fn=None,
                archive_file=False, delete_original_file=False, preserve_file_ext=False,
                returns_composite=False, custom_fields=None,
-               serializer=None, load_kwargs=None, dump_kwargs=None,
+               serializer=None, load_kwargs=None, dump_kwargs=None, use_cache=None,
                _provenance_wrapper=provenance_wrapper):
     """
     Decorates a function so that all inputs and outputs are cached. Wraps the return
@@ -409,7 +427,7 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
     remove parameter and the value_repr function. 
 
     merge_defaults : bool or list of parameters to be merged
-       When True then the wrapper introspects the argspec of the function being
+        When True then the wrapper introspects the argspec of the function being
     decorated to see what keyword arguments have default dictionary values. When
     a list of strings the list is taken to be the list of parameters you want to
     merge on.
@@ -417,6 +435,9 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
     argument is merged with the default dictionary. That way people only need
     to specify the keys they are overriding and don't have to specify all the
     default values in the default dictionary.
+
+    use_cache : bool
+        TODO: Write documentation for use_cache
 
     TODO: add an example inline.. for now see the tests for examples
 
@@ -487,7 +508,8 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
                                   'custom_fields': custom_fields or {},
                                   'serializer': serializer,
                                   'load_kwargs': load_kwargs,
-                                  'dump_kwargs': dump_kwargs}
+                                  'dump_kwargs': dump_kwargs,
+                                  'use_cache': use_cache}
         f.__merge_defaults__ = merge_defaults
         return _provenance_wrapper(repo, f)
 

@@ -634,3 +634,22 @@ Offending names: {'foo': 2}
 """
     with pytest.raises(ValueError, message=msg):
         p.lazy_proxy_dict([foo, foo2])
+
+
+def test_use_cache_false(repo):
+    @p.provenance(name='add_something', use_cache=False)
+    def add_one(x):
+        return x + 1
+
+    @p.provenance(name='add_something', use_cache=False)
+    def add_two(x):
+        return x + 2
+
+    a = add_one(5)
+    assert a == 6
+
+    b = add_two(5)
+    assert b == 7
+
+    c = add_one(5)
+    assert c.artifact.id == a.artifact.id

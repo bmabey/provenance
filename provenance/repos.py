@@ -83,12 +83,13 @@ class Config(object):
     def set_current(cls, registry):
         cls._current = registry
 
-    def __init__(self, blobstores, repos, default_repo, run_info_fn=None):
+    def __init__(self, blobstores, repos, default_repo, run_info_fn=None, use_cache=True):
         self.blobstores = blobstores
         self.repos = repos
         self.set_default_repo(default_repo)
         self._run_info = None
         self.run_info_fn = run_info_fn or t.identity
+        self.use_cache = use_cache
 
     def set_default_repo(self, repo):
         if isinstance(repo, string_type):
@@ -129,6 +130,14 @@ def get_default_repo():
 
 def set_run_info_fn(fn):
     current_config().set_run_info_fn(fn)
+
+
+def get_use_cache():
+    return current_config().use_cache
+
+
+def set_use_cache(setting):
+    current_config().use_cache = setting
 
 
 @contextmanager
@@ -320,7 +329,6 @@ def _artifact_from_record(repo, record):
                     t.dissoc(record._asdict(), 'value', 'inputs', 'run_info'),
                     value=record.value, inputs=record.inputs,
                     run_info=record.run_info)
-
 
 
 class ArtifactRepository(object):
@@ -559,7 +567,7 @@ class PostgresRepo(ArtifactRepository):
         super(PostgresRepo, self).__init__(read=read, write=write,
                                            read_through_write=read_through_write,
                                            delete=delete)
-       
+
         if not isinstance(db, string_type) and schema is not None:
             raise ValueError("You can only provide a schema with a DB url.")
 
