@@ -100,7 +100,7 @@ def test_chained_storage_with_disk_and_s3_sharing_cachedir(s3fs):
     mem_store = bs.MemoryStore(read=True, write=True, delete=True)
     disk_store = bs.DiskStore(tmp_dir, read=True, write=True, delete=True)
     s3_store = bs.S3Store(tmp_dir, s3fs=s3fs, basepath="bucket/prov_test",
-                          read=True, write=True, delete=True)
+                          read=True, write=True, delete=True, always_check_s3=True)
     stores = [mem_store, disk_store, s3_store]
 
     chained_store = bs.ChainedStore(stores)

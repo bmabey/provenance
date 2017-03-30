@@ -140,10 +140,25 @@ class DiskStore(BaseBlobStore):
 class S3Store(BaseBlobStore):
     def __init__(self, cachedir, basepath, s3_config=None, s3fs=None,
                  read=True, write=True, read_through_write=True,
-                 delete=False, on_duplicate_key='skip', cleanup_cachedir=False):
+                 delete=False, on_duplicate_key='skip', cleanup_cachedir=False,
+                 always_check_s3=False):
+        """
+        Parameters
+        ----------
+        always_check_s3 : bool
+           When True S3 will be checked with every __contains__ call. Otherwise it will
+        short-circuit if the blob is found in the cachedir. For performance reasons this
+        should always be set to False. The only reason why you would want to use this
+        is if you are using a S3Store and a DiskStore in a ChainedStore together for
+        some reason. Since the S3Store basically doubles as a DiskStore with it's cachedir
+        chaining the two doesn't really make sense though.
+        """
         super(S3Store, self).__init__(
             read=read, write=write, read_through_write=read_through_write,
             delete=delete, on_duplicate_key=on_duplicate_key)
+
+        self.always_check_s3 = always_check_s3
+
         if s3fs:
             self.s3fs = s3fs
         elif s3_config is not None:
@@ -168,8 +183,10 @@ class S3Store(BaseBlobStore):
 
     def __contains__(self, id):
         cs.ensure_contains(self)
-        # maybe cache bucket listing if not too big?
-        return self.s3fs.exists(self._path(id))
+        if self.always_check_s3:
+            return self.s3fs.exists(self._path(id))
+        else:
+            return os.path.exists(self._filename(id)) or self.s3fs.exists(self._path(id))
 
     def _put_overwrite(self, id, value, serializer, read_through):
         cs.ensure_put(self, id, read_through, check_contains=False)
@@ -191,6 +208,9 @@ class S3Store(BaseBlobStore):
 
     def delete(self, id):
         cs.ensure_delete(self, id)
+        filename = self._filename(id)
+        if os.path.exists(filename):
+            os.remove(filename)
         self.s3fs.rm(self._path(id))
 
 
