@@ -139,6 +139,9 @@ def get_use_cache():
 def set_use_cache(setting):
     current_config().use_cache = setting
 
+def get_repo_by_name(repo_name):
+    return current_config().repos[repo_name]
+
 
 @contextmanager
 def using_repo(repo_or_name):

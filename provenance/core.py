@@ -202,7 +202,12 @@ def provenance_wrapper(repo, f):
     @bfu.wraps(f)
     def _provenance_wrapper(*args, **kargs):
         artifact_info_ = copy(artifact_info)
-        r = repos.get_default_repo() if repo is None else repo
+        r = repo
+        if repo is None:
+            r = repos.get_default_repo()
+        elif isinstance(repo, str):
+            r = repos.get_repo_by_name(repo)
+
         _run_info = run_info()
         archive_file = func_info['archive_file']
 
@@ -365,9 +370,10 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
     that it calls has changed, or an underlying data source that is being queried has
     updated data.
 
-    repo : Repository
+    repo : Repository or str
         Which repo this artifact should be saved in. The default repo is used when
-    none is provided and this is the recommended approach (i.e. don't use this param!)
+    none is provided and this is the recommended approach. When you pass in a string
+    it should be the name of a repo in the currently registered config.
 
     name : str
        The name of the artifact of the function being wrapped. If not provided it
