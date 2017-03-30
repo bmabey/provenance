@@ -6,3 +6,4 @@ hypothesis>=3.6.0
 keras
 h5py
 pandas
+tensorflow
