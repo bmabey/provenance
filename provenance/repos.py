@@ -284,6 +284,11 @@ class Artifact(object):
     def run_info(self):
         return self.repo.run_info(self.id)
 
+    @property
+    def tags(self):
+        if self.custom_fields:
+            return self.custom_fields.get('tags', None)
+
     def proxy(self):
         if self.composite:
             value = lazy_dict(t.valmap(lambda a: lambda: a.proxy(), self.value))

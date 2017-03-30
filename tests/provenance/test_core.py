@@ -36,7 +36,7 @@ def test_integration_test(repo):
         times_called += 1
         return [i + process_b_inc for i in data]
 
-    @p.provenance()
+    @p.provenance(tags=['tag_a'])
     def combine_processed_data(inc_a, inc_b):
         return [a + b for a, b in zip(inc_a, inc_b)]
 
@@ -57,6 +57,10 @@ def test_integration_test(repo):
 
     #check initial wrapping
     assert artifact.value_id == hash([8,10])
+
+    #check for custom_fields and tags in result
+    assert artifact.custom_fields == {'tags': ['tag_a']}
+    assert artifact.tags == ['tag_a']
 
     # check that inputs were removed
     assert inc_a_artifact.inputs == {'kargs': {'data': [1, 2], 'process_a_inc': 1},

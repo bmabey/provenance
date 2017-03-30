@@ -354,7 +354,7 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
                archive_file=False, delete_original_file=False, preserve_file_ext=False,
                returns_composite=False, custom_fields=None,
                serializer=None, load_kwargs=None, dump_kwargs=None, use_cache=None,
-               _provenance_wrapper=provenance_wrapper):
+               tags=None, _provenance_wrapper=provenance_wrapper):
     """
     Decorates a function so that all inputs and outputs are cached. Wraps the return
     value in a proxy that has an artifact attached to it allowing for the provenance
@@ -453,6 +453,9 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
         A dict with types that serialize to json. These are saved for searching in
     the repository.
 
+    tags : list, tuple or set
+        Will be added to custom_fields as the value for the 'tags' key.
+
     TODO: add an example inline.. for now see the tests for examples
 
     archive_file : bool, defaults False
@@ -508,6 +511,9 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
         _name = name
         if _name is None:
             _name = f.__name__
+        _custom_fields = custom_fields or {}
+        if tags:
+            _custom_fields['tags'] = tags
         f._provenance_metadata = {'version': version,
                                   'name': _name,
                                   'archive_file': archive_file,
@@ -519,7 +525,7 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
                                   'preserve_file_ext': preserve_file_ext,
                                   'returns_composite': returns_composite,
                                   'archive_file': archive_file,
-                                  'custom_fields': custom_fields or {},
+                                  'custom_fields': _custom_fields,
                                   'serializer': serializer,
                                   'load_kwargs': load_kwargs,
                                   'dump_kwargs': dump_kwargs,
