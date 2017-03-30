@@ -4,12 +4,15 @@ import shutil
 import tempfile
 from copy import copy, deepcopy
 
+import pytest
+pytest.importorskip("keras")
+
 import cloudpickle as pickle
 import keras.models
 import numpy as np
 import pandas as pd
-import pytest
 import toolz as t
+
 from keras import backend as K
 from keras.datasets import mnist
 from keras.layers import Dense, Dropout, Input, Lambda
@@ -209,7 +212,8 @@ def test_integration_keras_test(dbdiskrepo):
 # this gets to the core of deterministic training by TF (or theano)
 # not sure how best to do it and question the value of it so for now
 # I am not going to worry about it.
-def xtest_consistent_hashing_after_fits(dbdiskrepo):
+@pytest.mark.xfail(run=False)
+def test_consistent_hashing_after_fits(dbdiskrepo):
     data = mnist_data()
 
     model_a = compile_model(basic_model())

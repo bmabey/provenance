@@ -307,7 +307,7 @@ def test_composite_artifacts(repo):
 
     # Check that individual artifacts where created
     a_artifact = results['a'].artifact
-    assert a_artifact.name == 'load_data_a'
+    assert a_artifact.name == 'test_core.load_data_a'
     assert repo.get_by_id(a_artifact.id) == a_artifact
 
     # Check that the correct serializers is used
