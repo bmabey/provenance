@@ -338,3 +338,15 @@ def xtest_db_is_automatically_migrated(disk_store):
 
     p.set_default_repo(None)
     sql_utils.drop_database(db_conn_str)
+
+def test_artifact_proxy_works_with_iterables():
+    class Foo(object):
+        def __init__(self, a):
+            self.a = a
+        def __next__(self):
+            return self.a
+
+    foo = r.artifact_proxy(Foo(5), 'stub artifact')
+
+    assert next(foo) == 5
+

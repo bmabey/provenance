@@ -211,6 +211,13 @@ class Proxy():
     def transform_value(self, transformer_fn):
         return transform_value(self, transformer_fn)
 
+    def __next__(self):
+        # note, that every proxy is always identified as an
+        # iterable anyways: https://github.com/GrahamDumpleton/wrapt/issues/93
+        # this just forwards the method to the wrapped version since
+        # it wasn't doing that for somereason
+        return next(self.__wrapped__)
+
 
 class ArtifactProxy(wrapt.ObjectProxy, Proxy):
     def __init__(self, value, artifact):
