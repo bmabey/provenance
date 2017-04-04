@@ -4,7 +4,6 @@ import tempfile
 import pandas as pd
 import os
 import shutil
-
 import provenance as p
 import provenance.core as pc
 import provenance.repos as r
@@ -687,3 +686,28 @@ def test_use_cache_false(repo):
     c = increase(5)
     assert c == 7
     assert c.artifact.id != a.artifact.id
+
+
+def test_check_mutations(repo, with_check_mutations):
+    @p.provenance()
+    def load_data():
+        return [1, 2, 3]
+
+    @p.provenance()
+    def process_data(data):
+        return list(map(lambda x: x + 1, data))
+
+    data = load_data()
+
+    # We should be able to process unmutated data
+    processed_data = process_data(data)
+    assert processed_data == [2, 3, 4]
+
+    # We should not be able to process mutated data
+    data[0] = 5
+    with pytest.raises(pc.MutatedArtifactValueError) as excinfo:
+        process_data(data)
+    expected_msg = \
+        "Artifact {}, of type {} was mutated before being passed to test_core.process_data as arguments (data)".format(
+            data.artifact.id, type(data.artifact.value))
+    assert str(excinfo.value) == expected_msg
