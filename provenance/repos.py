@@ -569,6 +569,8 @@ class Encoder(json.JSONEncoder):
             return bool(val)
         elif isinstance(val, np.ndarray):
             return val.tolist()
+        elif is_proxy(val) or isinstance(val, Artifact):
+            return repr(val)
         elif callable(val):
             try:
                 return utils.fn_info(val)
