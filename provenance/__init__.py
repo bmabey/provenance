@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 from ._config import from_config, load_config, load_yaml_config
 from ._dependencies import dependencies
-from .core import archive_file, promote, provenance, provenance_set
+from .core import archive_file, promote, provenance, provenance_set, ensure_proxies
 from .hashing import hash, value_repr
 from .repos import (capture_set, create_set, current_config, get_check_mutations,
                     get_default_repo, get_repo_by_name, get_set_by_id,

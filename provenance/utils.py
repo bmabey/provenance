@@ -52,7 +52,7 @@ def args_extractor(f, merge_defaults=False):
             varargs = args[num_named_args:]
             kargs = t.merge(kargs, unnamed_args)
             return varargs, kargs
-
+    
     return _args_dict
 
 

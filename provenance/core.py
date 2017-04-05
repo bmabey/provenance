@@ -372,6 +372,39 @@ def remove_inputs_fn(to_remove):
     return remove_inputs
 
 
+def ensure_proxies(*parameters):
+    """Ensures that the provided parameters are always arguments of type ArtifactProxy.
+
+    When no parameters are passed then all arguments will be checked.
+
+    This is useful to use on functions where you want to make sure artifacts
+    are being passed in so lineage can be tracked.
+    """
+
+    def decorator(func):
+        base_fn = _base_fn(func)
+        extract_args = utils.args_extractor(base_fn, merge_defaults=True)
+
+        @bfu.wraps(func)
+        def check_args(*args, **kargs):
+            _varargs, argsd = extract_args(args, kargs)
+            not_valid = None
+            if len(parameters) == 0:
+                not_valid = [p for p, a in argsd.items() if not repos.is_proxy(a)]
+            else:
+                not_valid = [p for p in parameters if not repos.is_proxy(argsd[p])]
+            if len(not_valid) > 0:
+                msg = "Arguments must be `ArtifactProxy`s but were not: [{}]"\
+                      .format(", ".join(not_valid))
+                raise ValueError(msg)
+
+            return func(*args, **kargs)
+
+        return check_args
+
+    return decorator
+
+
 def provenance(version=0, repo=None, name=None, merge_defaults=None,
                ignore=None, input_hash_fn=None, remove=None, input_process_fn=None,
                archive_file=False, delete_original_file=False, preserve_file_ext=False,
@@ -498,7 +531,6 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
     True would be if you wanted to be able to look at the contents of a blobstore
     on disk and being able to preview the contents of an artifact with your
     regular OS tools (e.g. viewing images or videos).
-
 
     Returns
     -------

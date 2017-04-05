@@ -711,3 +711,48 @@ def test_check_mutations(repo, with_check_mutations):
         "Artifact {}, of type {} was mutated before being passed to test_core.process_data as arguments (data)".format(
             data.artifact.id, type(data.artifact.value))
     assert str(excinfo.value) == expected_msg
+
+
+def test_ensure_proxies(repo):
+    @p.provenance()
+    def load_data():
+        return [1, 2, 3]
+
+    @p.ensure_proxies('data')
+    @p.provenance()
+    def process_data(data):
+        return list(map(lambda x: x + 1, data))
+
+    # happy case with an artifact
+    data = load_data()
+    processed_data = process_data(data)
+    assert processed_data.artifact.value == [2, 3, 4]
+
+    # trying to call the function without an aritfact proxy
+    with pytest.raises(ValueError) as excinfo:
+        process_data([1, 2, 3])
+
+    expected_msg = "Arguments must be `ArtifactProxy`s but were not: [data]"
+    assert str(excinfo.value) == expected_msg
+
+
+def test_ensure_proxies_all_params(repo):
+    @p.provenance()
+    def load_data():
+        return [1, 2, 3]
+
+    @p.ensure_proxies()
+    @p.provenance()
+    def process_data(data):
+        return list(map(lambda x: x + 1, data))
+
+    # happy case with an artifact
+    data = load_data()
+    processed_data = process_data(data)
+
+    # trying to call the function without an aritfact proxy
+    with pytest.raises(ValueError) as excinfo:
+        process_data([1, 2, 3])
+
+    expected_msg = "Arguments must be `ArtifactProxy`s but were not: [data]"
+    assert str(excinfo.value) == expected_msg
