@@ -116,12 +116,18 @@ def blobstore(request, memory_store, disk_store):
     return store
 
 
+# there must be a better way, but this is so I can get get two db_session fixtures
+db_session_ = db_session
 @pytest.fixture(scope='function',
                # params=['memoryrepo'])
-                params=['memoryrepo', 'dbrepo-diskstore', 'dbrepo-memorystore', 'chained-memmem'
+                params=['memoryrepo', 'dbrepo-diskstore', 'dbrepo-memorystore', 'chained-memmem',
+                     #   'chained-repo'
                 ])
 def repo(request, db_session):
     disk_store_gen = None
+    disk_store_gen2 = None
+    repo2 = None
+    prevdir = os.getcwd()
     if request.param == 'memoryrepo':
         repo = r.MemoryRepo(read=True, write=True, delete=True)
     elif request.param == 'dbrepo-diskstore':
@@ -131,6 +137,16 @@ def repo(request, db_session):
     elif request.param == 'chained-memmem':
         repo = r.ChainedRepo([r.MemoryRepo(read=True, write=True, delete=True),
                               r.MemoryRepo(read=True, write=True, delete=True)])
+    elif request.param == 'chained-repo':
+        disk_store_gen = disk_store()
+        disk_store_gen2 = disk_store()
+        repo1 = r.DbRepo(db_session, next(disk_store_gen),
+                        read=True, write=True, delete=True)
+        os.chdir(prevdir)
+        repo2 = r.DbRepo('postgresql://localhost/test_provenance', next(disk_store_gen2),
+                         read=True, write=True, delete=True,
+                         schema='second_repo')
+        repo = r.ChainedRepo([repo1, repo2])
     else:
         repo = r.DbRepo(db_session,
                         memory_store(),
@@ -139,8 +155,13 @@ def repo(request, db_session):
     p.set_default_repo(repo)
     yield repo
     p.set_default_repo(None)
+    if repo2 is not None:
+        repo2._db_engine.execute('drop schema second_repo cascade;')
+
     if disk_store_gen:
         next(disk_store_gen, 'ignore')
+    if disk_store_gen2:
+        next(disk_store_gen2, 'ignore')
 
 
 @pytest.fixture(scope='function', params=['dbrepo-diskstore'])
