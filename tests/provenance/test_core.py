@@ -639,6 +639,16 @@ Offending names: {'foo': 2}
         p.lazy_proxy_dict([foo, foo2])
 
 
+def test_lazy_proxy_dict_with_dict_input(repo):
+    foo1 = repo.put(artifact_record(name='foo', value=42))
+    foo2 = repo.put(artifact_record(name='foo', value=100))
+
+    d = p.lazy_proxy_dict({'foo1': foo1, 'foo2': foo2})
+
+    assert d['foo1'] == 42
+    assert d['foo2'] == 100
+
+
 def test_use_cache_true(repo):
     @p.provenance()
     def increase(x):

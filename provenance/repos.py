@@ -1085,6 +1085,13 @@ class lazy_dict(object):
             t.merge(t.valmap(lambda _: "...", self.thunks), self.realized))
 
 def lazy_proxy_dict(artifacts_or_ids):
+    if isinstance(artifacts_or_ids, dict):
+        artifacts = t.valmap(coerce_to_artifact, artifacts_or_ids)
+        lambdas = {name: (lambda a: lambda: a.proxy())(a)
+                   for name, a in artifacts.items()}
+        return lazy_dict(lambdas)
+
+    # else we have a collection
     artifacts = coerce_to_artifacts(artifacts_or_ids)
     names = [a.name for a in artifacts]
     if not t.isdistinct(names):
