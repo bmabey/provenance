@@ -634,9 +634,25 @@ def test_lazy_proxy_dict_prevents_creation_with_artifacts_of_same_name(repo):
 
     msg = """Only artifacts with distinct names can be used in a lazy_proxy_dict.
 Offending names: {'foo': 2}
+Use the option `group_artifacts_of_same_name=True` if you want a list of proxies to be returned under the respective key.
 """
-    with pytest.raises(ValueError, message=msg):
+    with pytest.raises(ValueError) as excinfo:
         p.lazy_proxy_dict([foo, foo2])
+
+    assert msg in str(excinfo.value)
+
+
+def test_lazy_proxy_dict_allows_for_grouping_of_artifacts_of_same_name(repo):
+    foo = repo.put(artifact_record(name='foo', value=42))
+    foo2 = repo.put(artifact_record(name='foo', value=100))
+    bar = repo.put(artifact_record(name='bar', value=55))
+
+    ld = p.lazy_proxy_dict([foo, foo2, bar], group_artifacts_of_same_name=True)
+
+    assert set(ld.keys()) == set(['bar', 'foo'])
+
+    ld['bar'] == bar
+    ld['foo'] == [foo, foo2]
 
 
 def test_lazy_proxy_dict_with_dict_input(repo):

@@ -976,8 +976,13 @@ class ArtifactSet(namedtuple('ArtifactSet', artifact_set_properties)):
         repo = repo if repo else get_default_repo()
         return repo.put_set(self)
 
-    def proxy_dict(self, repo=None):
-        return lazy_proxy_dict(self.artifact_ids)
+    def proxy_dict(self, group_artifacts_of_same_name=False):
+        """
+        Returns a lazy_proxy_dict of the artifacts that are contained in this set.
+
+        See the documentation for lazy_proxy_dict for more information.
+        """
+        return lazy_proxy_dict(self.artifact_ids, group_artifacts_of_same_name)
 
 
 def save_artifact(f, artifact_ids):
@@ -1084,7 +1089,20 @@ class lazy_dict(object):
         return "lazy_dict({})".format(
             t.merge(t.valmap(lambda _: "...", self.thunks), self.realized))
 
-def lazy_proxy_dict(artifacts_or_ids):
+def lazy_proxy_dict(artifacts_or_ids, group_artifacts_of_same_name=False):
+    """
+    Takes a list of artifacts or artifact ids and returns a dictionary whose
+    keys are the names of the artifacts. The values will be lazily loaded into
+    proxies as requested.
+
+    Parameters
+    ----------
+    artifacts_or_ids : collection of artifacts or artifact ids (strings)
+
+    group_artifacts_of_same_name: bool (default: False)
+    If set to True then artifacts of the same name will be grouped together in
+    one list. When set to False an exception will be raised
+    """
     if isinstance(artifacts_or_ids, dict):
         artifacts = t.valmap(coerce_to_artifact, artifacts_or_ids)
         lambdas = {name: (lambda a: lambda: a.proxy())(a)
@@ -1093,13 +1111,22 @@ def lazy_proxy_dict(artifacts_or_ids):
 
     # else we have a collection
     artifacts = coerce_to_artifacts(artifacts_or_ids)
-    names = [a.name for a in artifacts]
-    if not t.isdistinct(names):
-        multi = t.thread_last(names,
-                              t.frequencies,
-                              (t.valfilter, lambda x: x > 1))
+    by_name = t.groupby(lambda a: a.name, artifacts)
+    singles = t.valfilter(lambda l: len(l) == 1, by_name)
+    multi = t.valfilter(lambda l: len(l) > 1, by_name)
+
+    lambdas = {name: (lambda a: lambda: a.proxy())(a[0]) for name, a in singles.items()}
+
+    if group_artifacts_of_same_name and len(multi) > 0:
+        lambdas = t.merge(lambdas,
+                          {name:
+                           (lambda artifacts: (lambda: [a.proxy() for a in artifacts]))(artifacts)
+                           for name, artifacts in multi.items()})
+
+    if not group_artifacts_of_same_name and len(multi) > 0:
         raise ValueError("""Only artifacts with distinct names can be used in a lazy_proxy_dict.
--Offending names: {}""".format(multi))
-    lambdas = {a.name: (lambda a: lambda: a.proxy())(a) for a in artifacts}
+Offending names: {}
+Use the option `group_artifacts_of_same_name=True` if you want a list of proxies to be returned under the respective key.
+        """.format({n: len(a) for n, a in multi.items()}))
 
     return lazy_dict(lambdas)
