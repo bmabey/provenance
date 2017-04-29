@@ -130,6 +130,11 @@ def get_default_repo():
 
 
 def set_run_info_fn(fn):
+    """
+    This hook allows you to provide a function that will be called once with a process's
+    `run_info` default dictionary. The provided function can then update this dictionary
+    with other useful information you wish to track, such as git ref or build server id.
+    """
     current_config().set_run_info_fn(fn)
 
 
