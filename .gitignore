@@ -19,3 +19,4 @@ scratch/
 .artifacts
 examples/**/artifacts/
 examples/**/blobstore/
+.ipynb_checkpoints
