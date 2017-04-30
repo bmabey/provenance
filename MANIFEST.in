@@ -1,6 +1,8 @@
 recursive-include provenance *.py
 recursive-include docs *.rst
 include provenance/migrations/*
+include provenance/vis/*
+include provenance/vis
 include provenance/migrations/versions/*
 include provenance/alembic.ini
 
@@ -12,6 +14,6 @@ include LICENSE.txt
 include HISTORY.rst
 include MANIFEST.in
 
-prune docs/_build
+prune docs/build
 include versioneer.py
 include provenance/_version.py

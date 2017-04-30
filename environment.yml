@@ -10,3 +10,8 @@ dependencies:
 - pip:
   - versioneer
   - twine
+  - Sphinx
+  - nbsphinx
+  - yamlmagic
+  - sphinxcontrib-websupport
+  - sphinx-autobuild

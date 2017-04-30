@@ -17,6 +17,13 @@ steroids.
 
 
 
+`provenance` is a Python library for function-level caching and provenance that aids in creating parsimonious pythonic pipelines&trade;. By wrapping functions in the `provenance` decorator computed results are cached across various stores (disk, S3, SFTP) and provenance (i.e. lineage) information is tracked and stored in an artifact repository. A central artifact repostiory can be used to enable production pipelines, team collaboration, and reproducible results.
+
+What that means in practice is that you can eaisly keep track of how artifacts (models, features, or any object or file) are created, where they are used, and have a central place to store and share these artifacts. This basic plumbing is required (or at least desired!) in any machine learning pipeline or project. `provenance` can be used standalone along with a build server to run pipelines or in conjunction with more advanced workflow systems (e.g. [Airflow](http://airbnb.io/projects/airflow/), [Luigi](https://github.com/spotify/luigi)).
+
+
+
+
 Status
 =======
 
@@ -76,7 +83,7 @@ Installation
 Getting Started
 ===============
 
-For an quick overview of the basics please see the `Introductory Guide notebook <https://github.com/bmabey/provenance/blob/master/notebook-docs/Introductory%20Guide.ipynb>`_.
+For an quick overview of the basics please see the `Introductory Guide notebook <https://github.com/bmabey/provenance/blob/master/docs/source/intro-guide.ipynb>`_.
 The `examples <https://github.com/bmabey/provenance/tree/master/examples>`_ directory contains some user contributed example setups with READMEs.
 
 Additional guides and docs built from the docstrings will be made available soon.
