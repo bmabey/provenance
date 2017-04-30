@@ -28,7 +28,7 @@ steroids.
 Example
 =======
 
-For an explanation of this example please see the `Introductory Guide notebook <https://github.com/bmabey/provenance/blob/master/docs/source/intro-guide.ipynb>`_.
+For an explanation of this example please see the `Introductory Guide <http://provenance.readthedocs.io/en/latest/intro-guide.html>`_.
 
 .. code-block:: python
 
@@ -74,27 +74,4 @@ Installation
 Getting Started
 ===============
 
-For an quick overview of the basics please see the `Introductory Guide notebook <https://github.com/bmabey/provenance/blob/master/docs/source/intro-guide.ipynb>`_.
-The `examples <https://github.com/bmabey/provenance/tree/master/examples>`_ directory contains some user contributed example setups with READMEs.
-
-Additional guides and docs built from the docstrings will be made available soon.
-
-Development
-===========
-
-Assuming you have conda installed, the following commands can be used to create a development environment.
-
-Initial environment creation
-
-.. code:: bash
-
-    conda env create
-    source activate provenance-dev
-    pip install -r requirements.txt
-    pip install -r test_requirements.txt
-
-Reactivating the environment after it has been created
-
-.. code:: bash
-
-    source activate provenance-dev
+For an quick overview of the basics please see the `Introductory Guide <http://provenance.readthedocs.io/en/latest/intro-guide.html>`_.
