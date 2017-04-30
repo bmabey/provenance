@@ -10,6 +10,8 @@ dependencies:
 - numpydoc
 - sphinx
 - pandoc
+# for ML examples
+- scikit-learn
 - pip:
   - nbsphinx
   - yamlmagic
