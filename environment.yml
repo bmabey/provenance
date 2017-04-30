@@ -7,10 +7,12 @@ dependencies:
 - numpy
 - pandas
 - alembic
+- numpydoc
+- sphinx
+- pandoc
 - pip:
   - versioneer
   - twine
-  - Sphinx
   - nbsphinx
   - yamlmagic
   - sphinxcontrib-websupport

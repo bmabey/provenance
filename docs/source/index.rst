@@ -5,16 +5,16 @@ Documentation
 ==================
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
     :glob:
-
-    hashing-and-mutation.ipynb
+       
     intro-guide.ipynb
+    hashing-and-mutation.ipynb
+    API.rst
 
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
