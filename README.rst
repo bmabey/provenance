@@ -2,8 +2,18 @@
 provenance
 ==========
 
-.. image:: https://travis-ci.org/bmabey/provenance.svg?branch=master
-    :target: https://travis-ci.org/bmabey/provenance
+|version status| |build status| |docs|
+
+
+.. |version status| image:: https://img.shields.io/pypi/v/provenance.svg
+   :target: https://pypi.python.org/pypi/provenance
+   :alt: Version Status
+.. |build status| image:: https://travis-ci.org/bmabey/provenance.png?branch=master
+   :target: https://travis-ci.org/bmabey/provenance
+   :alt: Build Status
+.. |docs| image:: https://readthedocs.org/projects/provenance/badge/?version=latest
+   :target: https://provenance.readthedocs.org
+   :alt: Documentation Status
 
 provenance is a Python library for function-level provenance. By decorating
 functions you are able to cache the results, i.e. artifacts, to memory, disk, or S3.
@@ -14,17 +24,6 @@ answer the question "Where did this come from?". The library is general
 purpose but was built for machine learning pipelines and plays nicely with numpy and
 other pydata libraries. You can basically think of this as joblib's memoize but on
 steroids.
-
-
-Status
-=======
-
-The library was extracted from a production system and has been used in other
-systems and has helped multiple teams collaborate (e.g. sharing models and features
-easily over s3). The API is stable and basic documentation exists but automatic
-documentation is not yet hooked up. We will be adding additional documentation,
-a documentation build, and logging soon.
-
 
 Example
 =======
