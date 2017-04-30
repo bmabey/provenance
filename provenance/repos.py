@@ -169,18 +169,58 @@ def using_repo(repo_or_name):
 
 
 def load_artifact(artifact_id):
+    """Loads and returns the ``Artifact`` with the ``artifact_id`` from the default repo.
+
+    Parameters
+    ----------
+    artifact_id : string
+
+    See Also
+    --------
+    load_proxy
+    """
     return get_default_repo().get_by_id(artifact_id)
 
 
 def load_proxy(artifact_id):
+    """Loads and returns the ``ArtifactProxy`` with the ``artifact_id`` from the default repo.
+
+    Parameters
+    ----------
+    artifact_id : string
+
+    See Also
+    --------
+    load_artifact
+    """
     return get_default_repo().get_by_id(artifact_id).proxy()
 
 
 def get_set_by_id(set_id):
+    """Loads and returns the ``ArtifactSet`` with the ``set_id`` from the default repo.
+
+    Parameters
+    ----------
+    set_id : string
+
+    See Also
+    --------
+    load_set_by_name
+    """
     return get_default_repo().get_set_by_id(set_id)
 
 
 def get_set_by_name(set_name):
+    """Loads and returns the ``ArtifactSet`` with the ``set_name`` from the default repo.
+
+    Parameters
+    ----------
+    set_name : string
+
+    See Also
+    --------
+    load_set_by_id
+    """
     return get_default_repo().get_set_by_name(set_name)
 
 
@@ -200,8 +240,8 @@ def name_set(artifact_set_or_id, name):
 
 def transform_value(proxy_artifact, transformer_fn):
     """
-    Transforms the underlying value of the `proxy_artifact` with
-    the provided `transformer_fn`. A new ArtifactProxy is returned
+    Transforms the underlying value of the ``proxy_artifact`` with
+    the provided ``transformer_fn``. A new ``ArtifactProxy`` is returned
     with the transformed value but with the original artifact.
 
     The motivation behind this function is to allow archived files

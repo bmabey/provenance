@@ -380,7 +380,7 @@ def remove_inputs_fn(to_remove):
 
 
 def ensure_proxies(*parameters):
-    """Ensures that the provided parameters are always arguments of type ArtifactProxy.
+    """Decorator that ensures that the provided parameters are always arguments of type ArtifactProxy.
 
     When no parameters are passed then all arguments will be checked.
 
