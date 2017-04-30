@@ -196,7 +196,7 @@ def load_proxy(artifact_id):
     return get_default_repo().get_by_id(artifact_id).proxy()
 
 
-def get_set_by_id(set_id):
+def load_set_by_id(set_id):
     """Loads and returns the ``ArtifactSet`` with the ``set_id`` from the default repo.
 
     Parameters
@@ -210,7 +210,7 @@ def get_set_by_id(set_id):
     return get_default_repo().get_set_by_id(set_id)
 
 
-def get_set_by_name(set_name):
+def load_set_by_name(set_name):
     """Loads and returns the ``ArtifactSet`` with the ``set_name`` from the default repo.
 
     Parameters
