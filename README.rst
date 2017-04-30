@@ -28,7 +28,7 @@ steroids.
 Example
 =======
 
-For an explanation of this example please see the `Introductory Guide <http://provenance.readthedocs.io/en/latest/intro-guide.html>`_.
+For an explanation of this example please see the `Introductory Guide`_.
 
 .. code-block:: python
 
@@ -61,6 +61,7 @@ For an explanation of this example please see the `Introductory Guide <http://pr
 .. image:: https://raw.githubusercontent.com/bmabey/provenance/master/docs/source/images/lineage_example.png
 
 
+.. _Introductory Guide: http://provenance.readthedocs.io/en/latest/intro-guide.html
 
 Installation
 ============
@@ -71,7 +72,3 @@ Installation
     pip install provenance
 
 
-Getting Started
-===============
-
-For an quick overview of the basics please see the `Introductory Guide <http://provenance.readthedocs.io/en/latest/intro-guide.html>`_.

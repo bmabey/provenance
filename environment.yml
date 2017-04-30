@@ -17,3 +17,7 @@ dependencies:
   - yamlmagic
   - sphinxcontrib-websupport
   - sphinx-autobuild
+  - sphinx_rtd_theme
+
+
+
