@@ -29,7 +29,7 @@ a documentation build, and logging soon.
 Example
 =======
 
-For an explanation of this example please see the `Introductory Guide notebook <https://github.com/bmabey/provenance/blob/master/notebook-docs/Introductory%20Guide.ipynb>`_.
+For an explanation of this example please see the `Introductory Guide notebook <https://github.com/bmabey/provenance/blob/master/docs/source/intro-guide.ipynb>`_.
 
 .. code-block:: python
 
