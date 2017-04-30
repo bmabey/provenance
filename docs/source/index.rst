@@ -11,6 +11,7 @@ Index
     :caption: Guides
 
     intro-guide.ipynb
+    ml-pipeline.ipynb
 
 .. toctree::
     :maxdepth: 1
