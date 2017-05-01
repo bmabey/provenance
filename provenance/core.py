@@ -428,126 +428,124 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
     ----------
     version : int
         Version of the code that is computing the value. You should increment this
-    number when anything that has changed to make a previous version of an artifact
-    outdated. This could be the function itself changing, other functions or libraries
-    that it calls has changed, or an underlying data source that is being queried has
-    updated data.
+        number when anything that has changed to make a previous version of an artifact
+        outdated. This could be the function itself changing, other functions or libraries
+        that it calls has changed, or an underlying data source that is being queried has
+        updated data.
 
     repo : Repository or str
         Which repo this artifact should be saved in. The default repo is used when
-    none is provided and this is the recommended approach. When you pass in a string
-    it should be the name of a repo in the currently registered config.
+        none is provided and this is the recommended approach. When you pass in a string
+        it should be the name of a repo in the currently registered config.
 
     name : str
        The name of the artifact of the function being wrapped. If not provided it
-    defaults to the function name (without the module).
+       defaults to the function name (without the module).
 
     returns_composite : bool
        When set to True the function should return a dictionary. Each value of the
-    returned dict will be serialized as an independent artifact. When the composite
-    artifact is returned as a cached value it will be a dict-like object that will
-    lazily pull back the artifacts as requested. You should use this when you need
-    multiple artifacts created atomically but you do not want to fetch all the them
-    simultaneously. That way you can lazily load only the artifacts you need.
+       returned dict will be serialized as an independent artifact. When the composite
+       artifact is returned as a cached value it will be a dict-like object that will
+       lazily pull back the artifacts as requested. You should use this when you need
+       multiple artifacts created atomically but you do not want to fetch all the them
+       simultaneously. That way you can lazily load only the artifacts you need.
 
     serializer : str
        The name of the serializer you want to use for this artifact. The built-in
-    ones are 'joblib' (the default) and 'cloudpickle'. 'joblib' is optimized for
-    numpy while 'cloudpickle' can serialize functions and other objects the standard
-    python (and joblib) pickler cannot. You can also register your own serializer
-    via the provenance.register_serializer function.
+       ones are 'joblib' (the default) and 'cloudpickle'. 'joblib' is optimized for
+       numpy while 'cloudpickle' can serialize functions and other objects the standard
+       python (and joblib) pickler cannot. You can also register your own serializer
+       via the provenance.register_serializer function.
 
     dump_kwargs : dict
        A dict of kwargs to be passed to the serializer when dumping artifacts
-    associated with this function. This is rarely used.
+       associated with this function. This is rarely used.
 
     load_kwargs : dict
        A dict of kwargs to be passed to the serializer when loading artifacts
-    associated with this function. This is rarely used.
+       associated with this function. This is rarely used.
 
     ignore : list, tuple, or set
        A list of parameters that should be ignored when computing the input hash.
-    This way you can mark certain parameters as invariant to the computed result.
-    An example of this would be a parameter indicating how many cores should be
-    used to compute a result. If the result is invariant the number of cores you
-    would want to ignore it so the value isn't recomputed when a different number
-    of cores is used.
+       This way you can mark certain parameters as invariant to the computed result.
+       An example of this would be a parameter indicating how many cores should be
+       used to compute a result. If the result is invariant the number of cores you
+       would want to ignore it so the value isn't recomputed when a different number
+       of cores is used.
 
     remove : list, tuple, or set
        A list of parameters that should be removed prior to hashing and saving
-    of the inputs. The distinction between this and the ignore parameter is
-    that with the ignore the parameters the ignored parameters are still recorded.
-    The motivation to not-record, i.e. remove, certain parameters usually driven
-    by performance or storage considerations.
+       of the inputs. The distinction between this and the ignore parameter is
+       that with the ignore the parameters the ignored parameters are still recorded.
+       The motivation to not-record, i.e. remove, certain parameters usually driven
+       by performance or storage considerations.
 
     input_hash_fn : function
         A function that takes a dict of all on the argument's hashes with the
-    structure of {'kargs': {'param_a': '1234hash'}, 'varargs': ('deadbeef',..)}.
-    It should return a dict of the same shape but is able to change this dict
-    as needed.  The main use case for this function is overshadowed by the
-    ignore parameter and so this parameter is hardly ever used.
+        structure of {'kargs': {'param_a': '1234hash'}, 'varargs': ('deadbeef',..)}.
+        It should return a dict of the same shape but is able to change this dict
+        as needed.  The main use case for this function is overshadowed by the
+        ignore parameter and so this parameter is hardly ever used.
 
     input_process_fn : function
         A function that pre-processes the function's inputs before they are hashed
-    or saved. The function takes a dict of all on the functions arguments with the
-    structure of {'kargs': {'param_a': 42}, 'varargs': (100,..)}.
-    It should return a dict of the same shape but is able to change this dict
-    as needed.  The main use case for this function is overshadowed by the
-    remove parameter and the value_repr function. 
+        or saved. The function takes a dict of all on the functions arguments with the
+        structure of {'kargs': {'param_a': 42}, 'varargs': (100,..)}.
+        It should return a dict of the same shape but is able to change this dict
+        as needed.  The main use case for this function is overshadowed by the
+        remove parameter and the value_repr function. 
 
     merge_defaults : bool or list of parameters to be merged
         When True then the wrapper introspects the argspec of the function being
-    decorated to see what keyword arguments have default dictionary values. When
-    a list of strings the list is taken to be the list of parameters you want to
-    merge on.
-    When a decorated function is called then the dictionary passed in as an
-    argument is merged with the default dictionary. That way people only need
-    to specify the keys they are overriding and don't have to specify all the
-    default values in the default dictionary.
+        decorated to see what keyword arguments have default dictionary values. When
+        a list of strings the list is taken to be the list of parameters you want to
+        merge on.
+        When a decorated function is called then the dictionary passed in as an
+        argument is merged with the default dictionary. That way people only need
+        to specify the keys they are overriding and don't have to specify all the
+        default values in the default dictionary.
 
     use_cache : bool or None (default None)
         use_cache False turns off the caching effects of the provenance decorator,
-    while still tracking the provenance of artifacts. This should only be used during
-    quick local iterations of a function to avoid having to bump the version with
-    each change. When set to None (the default) it defers to the global provenance
-    use_cache setting.
+        while still tracking the provenance of artifacts. This should only be used during
+        quick local iterations of a function to avoid having to bump the version with
+        each change. When set to None (the default) it defers to the global provenance
+        use_cache setting.
 
     custom_fields : dict
         A dict with types that serialize to json. These are saved for searching in
-    the repository.
+        the repository.
 
     tags : list, tuple or set
         Will be added to custom_fields as the value for the 'tags' key.
 
-    TODO: add an example inline.. for now see the tests for examples
-
     archive_file : bool, defaults False
        When True then the return value of the wrapped function will be assumed to
-    be a str or pathlike that represents a file that should be archived into
-    the blobstore. This is a good option to use when the computation of a function
-    can't easily be returned as an in-memory pickle-able python value.
+       be a str or pathlike that represents a file that should be archived into
+       the blobstore. This is a good option to use when the computation of a function
+       can't easily be returned as an in-memory pickle-able python value.
 
     delete_original_file : bool, defaults False
        To be used in conjunction with archive_file=True, when delete_original_file
-    is True then the returned file will be deleted after it has been archived.
+       is True then the returned file will be deleted after it has been archived.
 
     preserve_file_ext : bool, default False
        To be used in conjunction with archive_file=True, when preserve_file_ext is
-    True then id of the artifact archived will be the hash of the file contents
-    plus the file extension of the original file. The motivation of setting this to
-    True would be if you wanted to be able to look at the contents of a blobstore
-    on disk and being able to preview the contents of an artifact with your
-    regular OS tools (e.g. viewing images or videos).
+       True then id of the artifact archived will be the hash of the file contents
+       plus the file extension of the original file. The motivation of setting this to
+       True would be if you wanted to be able to look at the contents of a blobstore
+       on disk and being able to preview the contents of an artifact with your
+       regular OS tools (e.g. viewing images or videos).
 
     Returns
     -------
-    proxy object
+    ArtifactProxy
         Returns the value of the decorated function as a proxy. The proxy
-    will act exactly like the original object/value but will have an
-    artifact method that returns the Artifact associated with the value.
-    This wrapped value should be used with all other functions that are wrapped
-    with the provenance decorator as it will help track the provenance and also
-    reduce redundant storage of a given value.
+        will act exactly like the original object/value but will have an
+        artifact method that returns the Artifact associated with the value.
+        This wrapped value should be used with all other functions that are wrapped
+        with the provenance decorator as it will help track the provenance and also
+        reduce redundant storage of a given value.
     """
     if ignore and input_hash_fn:
         raise ValueError("You cannot provide both ignore and input_hash_fn")
@@ -632,14 +630,36 @@ s.register_serializer('file', file_dump, file_load)
 
 
 def archive_file(filename, name=None, delete_original=False, custom_fields=None, preserve_ext=False):
+    """(beta) Copies or moves the provided filename into the Artifact Repository so it can
+    be used as an ``ArtifactProxy`` to inputs of other functions.
+
+
+    Parameters
+    ----------
+    archive_file : bool, defaults False
+       When True then the return value of the wrapped function will be assumed to
+       be a str or pathlike that represents a file that should be archived into
+       the blobstore. This is a good option to use when the computation of a function
+       can't easily be returned as an in-memory pickle-able python value.
+
+    delete_original : bool, defaults False
+       When delete_original_file True the file will be deleted after it has been archived.
+
+    preserve_file_ext : bool, default False
+       When True then id of the artifact archived will be the hash of the file contents
+       plus the file extension of the original file. The motivation of setting this to
+       True would be if you wanted to be able to look at the contents of a blobstore
+       on disk and being able to preview the contents of an artifact with your
+       regular OS tools (e.g. viewing images or videos).
+    """
+
+    # we want artifacts created by archive_file to be invariant to the
+    # filename (see remove) but not the custom_fields.
+    # filename is still passed in so the hash of the file on disk can be
+    # computed as part of the id of the artifact.
     @provenance(archive_file=True, name=name or 'archive_file', preserve_file_ext=preserve_ext,
                 delete_original_file=delete_original, remove=['_archive_file_filename'],
                 custom_fields=custom_fields)
-
-    # we want artifacts created by archive_file to be invariant to the
-    # filename (see remove above) but # not the custom_fields.
-    # filename is still passed in so the hash of the file on disk can be
-    # computed as part of the id of the artifact.
     def _archive_file(_archive_file_filename, custom_fields):
         return filename
     return _archive_file(filename, custom_fields)

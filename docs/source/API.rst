@@ -17,6 +17,7 @@ Primary API
    create_set
    load_set_by_id
    load_set_by_name
+   archive_file
 
 Configuration
 ~~~~~~~~~~~~~
@@ -70,8 +71,10 @@ Primary API
 .. autofunction:: provenance_set
 .. autofunction:: capture_set
 .. autofunction:: create_set
-.. autofunction:: get_set_by_id
-.. autofunction:: get_set_by_name
+.. autofunction:: load_set_by_id
+.. autofunction:: load_set_by_name
+.. autofunction:: archive_file
+   
 
 Configuration
 

@@ -27,7 +27,7 @@ purpose but was built with machine learning pipelines in mind. By leveraging the
 What that means in practice is that you can easily keep track of how artifacts (models,
 features, or any object or file) are created, where they are used, and have a central place
 to store and share these artifacts. This basic plumbing is required (or at least desired!)
-in any machine learning pipeline or project. ``provenance`` can be used standalone along with
+in any machine learning pipeline and project. ``provenance`` can be used standalone along with
 a build server to run pipelines or in conjunction with more advanced workflow systems
 (e.g. `Airflow`_, `Luigi`_).
 
