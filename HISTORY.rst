@@ -3,18 +3,18 @@
 History
 =======
 
-0.10.0 (TBD)
+0.10.0 (2016-04-30)
 ------------
 
 * Change the default artifact name from the function name to the fully qualified module and function name.
   This will invalidate previously cached artifacts unless the names are migrated or explicitly set.
 * Documentation! A start at least, more docstrings and guides will be added soon.
 * Adds ``use_cache`` parameter and config option for when you only want to track provenance but not look for cache hits.
-* Adds ``check_mutations`` option to prevent `Artifact` mutations.
+* Adds ``check_mutations`` option to prevent ``Artifact`` value mutations.
 * Adds ``tags`` parameter to the ``provenance`` decorator for when you only want to track provenance but not look for cache hits.
 * Adds experimental (alpha!) ``keras`` support.
 * Adds a visualization module, pretty basic and mostly for docs and to illustrate what is possible.
-* Adds ``ensure_proxies`` decorator to guard against non ``ArtifactProxy``s being sent to functions.
+* Adds ``ensure_proxies`` decorator to guard against non ``ArtifactProxy`` being sent to functions.
 
 0.9.4.2 (2016-03-23)
 ---------------------
