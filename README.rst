@@ -15,15 +15,26 @@ provenance
    :target: https://provenance.readthedocs.org
    :alt: Documentation Status
 
-provenance is a Python library for function-level provenance. By decorating
-functions you are able to cache the results, i.e. artifacts, to memory, disk, or S3.
-The artifact stores can be layered, e.g. you can write to a local disk store and
-and a global team S3 one. Every artifact also keeps metadata associated with it
-on how it was created (i.e. the function and arguments used) so you can always
-answer the question "Where did this come from?". The library is general
-purpose but was built for machine learning pipelines and plays nicely with numpy and
-other pydata libraries. You can basically think of this as joblib's memoize but on
-steroids.
+``provenance`` is a Python library for function-level caching and provenance that aids in
+creating Parsimonious Pythonic |Pipelines|. By wrapping functions in the ``provenance``
+decorator computed results are cached across various tiered stores (disk, S3, SFTP) and
+`provenance <https://en.wikipedia.org/wiki/Provenance>`_ (i.e. lineage) information is tracked
+and stored in an artifact repository. A central artifact repository can be used to enable
+production pipelines, team collaboration, and reproducible results. The library is general
+purpose but was built with machine learning pipelines in mind. By leveraging the fantastic
+`joblib`_ library object serialization is optimized for ``numpy`` and other PyData libraries.
+
+What that means in practice is that you can easily keep track of how artifacts (models,
+features, or any object or file) are created, where they are used, and have a central place
+to store and share these artifacts. This basic plumbing is required (or at least desired!)
+in any machine learning pipeline or project. ``provenance`` can be used standalone along with
+a build server to run pipelines or in conjunction with more advanced workflow systems
+(e.g. `Airflow`_, `Luigi`_).
+
+.. |Pipelines| unicode:: Pipelines U+2122
+.. _joblib: https://pythonhosted.org/joblib/
+.. _Airflow: http://airbnb.io/projects/airflow/
+.. _Luigi: https://github.com/spotify/luigi
 
 Example
 =======
