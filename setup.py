@@ -20,7 +20,7 @@ setup(
     tests_requires=[open('test_requirements.txt').read().strip().split('\n')],
     extras_require=subpackages,
     include_package_data=True,
-    description="Provenance and caching library for functions",
+    description="Provenance and caching library for functions, built for creating lightweight machine learning pipelines.",
     long_description=(open('README.rst').read() if exists('README.rst')
                       else ''),
     author="Ben Mabey",
