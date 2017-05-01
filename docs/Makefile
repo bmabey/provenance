@@ -18,3 +18,10 @@ help:
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+
+clean-provenance:
+	rm -rf /tmp/provenance-intro-artifacts
+	rm -rf /tmp/provenance-ml-artifacts
+	dropdb provenance-intro
+	dropdb provenance-ml-guide
