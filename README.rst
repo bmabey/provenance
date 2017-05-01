@@ -77,9 +77,32 @@ For an explanation of this example please see the `Introductory Guide`_.
 Installation
 ============
 
+For the base functionality:
 
 .. code:: bash
 
     pip install provenance
 
 
+For the visualization module (which requires ``graphviz`` to be installed):
+
+.. code:: bash
+
+    pip install provenance[vis]
+
+For the SFTP store:
+
+.. code:: bash
+
+    pip install provenance[sftp]
+
+For everything all at once:
+
+
+.. code:: bash
+
+    pip install provenance[all]
+
+
+
+    
