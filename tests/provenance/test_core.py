@@ -831,3 +831,25 @@ def test_ensure_proxies_all_params(repo):
 
     expected_msg = "Arguments must be `ArtifactProxy`s but were not: [data]"
     assert str(excinfo.value) == expected_msg
+
+
+def test_dependencies_include_wrapped_artifacts(dbdiskrepo):
+
+    @p.provenance()
+    def add(a, b):
+        return a + b
+
+    sub = add(5, 5).artifact.id
+
+   # @p.provenance(returns_composite=True)
+    @p.provenance()
+    def calc(a, b):
+        return {'add': add(a, b), 'mult': a * b}
+
+    result = calc(5, 5)
+
+    deps = set([a.id for a in p.dependencies(result.artifact.id)])
+    assert sub in deps
+
+
+

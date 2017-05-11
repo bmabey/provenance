@@ -39,10 +39,7 @@ def _deps(val):
 
 
 def _artifact_branches(artifact):
-    if artifact.composite:
-        objs = _deps(artifact.inputs) + _deps(artifact.value)
-    else:
-        objs = _deps(artifact.inputs)
+    objs = _deps(artifact.inputs) + _deps(artifact.value)
     objs.sort(key=lambda a: a.id)
     return objs
 
