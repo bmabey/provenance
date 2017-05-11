@@ -168,7 +168,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'provenance', 'provenance Documentation',
-     author, 'provenance', 'One line description of project.',
+     author, 'provenance', 'Provenance and caching library for functions, built for creating lightweight machine learning pipelines.',
      'Miscellaneous'),
 ]
 
