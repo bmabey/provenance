@@ -137,34 +137,26 @@ class DiskStore(BaseBlobStore):
         os.remove(self._filename(id))
 
 
-class S3Store(BaseBlobStore):
-    def __init__(self, cachedir, basepath, s3_config=None, s3fs=None,
-                 read=True, write=True, read_through_write=True,
+class RemoteStore(BaseBlobStore):
+    def __init__(self, cachedir, basepath, read=True, write=True, read_through_write=True,
                  delete=False, on_duplicate_key='skip', cleanup_cachedir=False,
-                 always_check_s3=False):
+                 always_check_remote=False):
         """
         Parameters
         ----------
-        always_check_s3 : bool
-           When True S3 will be checked with every __contains__ call. Otherwise it will
+        always_check_remote : bool
+           When True the remote store will be checked with every __contains__ call. Otherwise it will
         short-circuit if the blob is found in the cachedir. For performance reasons this
         should always be set to False. The only reason why you would want to use this
-        is if you are using a S3Store and a DiskStore in a ChainedStore together for
-        some reason. Since the S3Store basically doubles as a DiskStore with it's cachedir
+        is if you are using a RemoteStore and a DiskStore in a ChainedStore together for
+        some reason. Since the RemoteStore basically doubles as a DiskStore with it's cachedir
         chaining the two doesn't really make sense though.
         """
-        super(S3Store, self).__init__(
+        super(RemoteStore, self).__init__(
             read=read, write=write, read_through_write=read_through_write,
             delete=delete, on_duplicate_key=on_duplicate_key)
 
-        self.always_check_s3 = always_check_s3
-
-        if s3fs:
-            self.s3fs = s3fs
-        elif s3_config is not None:
-            self.s3fs = S3FileSystem(**s3_config)
-        else:
-            raise ValueError("You must provide either s3_config or s3fs for a S3Store")
+        self.always_check = always_check_remote
 
         self.cachedir = _abspath(cachedir)
         self.basepath = basepath
@@ -181,12 +173,25 @@ class S3Store(BaseBlobStore):
     def _path(self, id):
         return os.path.join(self.basepath, id)
 
+    def _exists(self, path):
+        raise NotImplementedError()
+
+    def _delete_remote(self, path):
+        raise NotImplementedError()
+
+    def _upload_file(self, filename, path): 
+        raise NotImplementedError()
+
+    def _download_file(self, path, dest_filename):
+        raise NotImplementedError()
+
     def __contains__(self, id):
         cs.ensure_contains(self)
-        if self.always_check_s3:
-            return self.s3fs.exists(self._path(id))
+        path = self._path(id)
+        if self.always_check:
+            return self._exists(path)
         else:
-            return os.path.exists(self._filename(id)) or self.s3fs.exists(self._path(id))
+            return os.path.exists(self._filename(id)) or self._exists(path)
 
     def _put_overwrite(self, id, value, serializer, read_through):
         cs.ensure_put(self, id, read_through, check_contains=False)
@@ -195,7 +200,7 @@ class S3Store(BaseBlobStore):
         if not os.path.isfile(filename):
             with _atomic_write(filename) as temp:
                 serializer.dump(value, temp)
-        self.s3fs.put(filename, self._path(id))
+        self._upload_file(filename, self._path(id))
 
     def get(self, id, serializer=DEFAULT_VALUE_SERIALIZER, **_kargs):
         cs.ensure_read(self)
@@ -203,7 +208,7 @@ class S3Store(BaseBlobStore):
         filename = self._filename(id)
         if not os.path.exists(filename):
             with _atomic_write(filename) as temp:
-                self.s3fs.get(self._path(id), temp)
+                self._download_file(self._path(id), temp)
         return serializer.load(filename)
 
     def delete(self, id):
@@ -211,9 +216,53 @@ class S3Store(BaseBlobStore):
         filename = self._filename(id)
         if os.path.exists(filename):
             os.remove(filename)
-        self.s3fs.rm(self._path(id))
+        self._delete_remote(self._path(id))
 
 
+class S3Store(RemoteStore):
+    def __init__(self, cachedir, basepath, s3_config=None, s3fs=None,
+                 read=True, write=True, read_through_write=True,
+                 delete=False, on_duplicate_key='skip', cleanup_cachedir=False,
+                 always_check_s3=False):
+        """
+        Parameters
+        ----------
+        always_check_s3 : bool
+           When True S3 will be checked with every __contains__ call. Otherwise it will
+        short-circuit if the blob is found in the cachedir. For performance reasons this
+        should always be set to False. The only reason why you would want to use this
+        is if you are using a S3Store and a DiskStore in a ChainedStore together for
+        some reason. Since the S3Store basically doubles as a DiskStore with it's cachedir
+        chaining the two doesn't really make sense though.
+        """
+        super(S3Store, self).__init__(always_check_remote=always_check_s3,
+                                      cachedir = cachedir,
+                                      basepath = basepath,
+                                      cleanup_cachedir = cleanup_cachedir,
+                                      read=read, write=write, read_through_write=read_through_write,
+                                      delete=delete, on_duplicate_key=on_duplicate_key)
+
+        if s3fs:
+            self.s3fs = s3fs
+        elif s3_config is not None:
+            self.s3fs = S3FileSystem(**s3_config)
+        else:
+            raise ValueError("You must provide either s3_config or s3fs for a S3Store")
+
+    def _exists(self, path):
+        return self.s3fs.exists(path)
+
+    def _delete_remote(self, path):
+        self.s3fs.rm(path)
+
+    def _upload_file(self, filename, path): 
+        self.s3fs.put(filename, path)
+
+    def _download_file(self, remote_path, dest_filename):
+        self.s3fs.get(remote_path, dest_filename)
+
+
+    
 class ChainedStore(BaseBlobStore):
     def __init__(self, stores, read=True, write=True, read_through_write=True,
                  delete=True, on_duplicate_key='skip'):

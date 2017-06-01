@@ -18,14 +18,30 @@ def _ssh_client(ssh_config):
     return client
 
 
-class SFTPStore(bs.BaseBlobStore):
-    def __init__(self, cachedir, basepath, ssh_config=None, ssh_client=None,
-                 sftp_client=None, read=True, write=True,
-                 read_through_write=True, delete=False,
-                 on_duplicate_key='skip', cleanup_cachedir=False):
-        super(SFTPStore, self).__init__(
-            read=read, write=write, read_through_write=read_through_write,
-            delete=delete, on_duplicate_key=on_duplicate_key)
+class SFTPStore(bs.RemoteStore):
+    def __init__(self, cachedir, basepath,
+                 ssh_config=None, ssh_client=None, sftp_client=None,
+                 read=True, write=True, read_through_write=True,
+                 delete=False, on_duplicate_key='skip', cleanup_cachedir=False,
+                 always_check_remote=False):
+        """
+        Parameters
+        ----------
+        always_check_remote : bool
+           When True the SFTP server will be checked with every __contains__ call. Otherwise it will
+        short-circuit if the blob is found in the cachedir. For performance reasons this
+        should always be set to False. The only reason why you would want to use this
+        is if you are using a SFTPStore and a DiskStore in a ChainedStore together for
+        some reason. Since the SFTPStore basically doubles as a DiskStore with it's cachedir
+        chaining the two doesn't really make sense though.
+        """
+        super(SFTPStore, self).__init__(always_check_remote=always_check_remote,
+                                      cachedir = cachedir,
+                                      basepath = basepath,
+                                      cleanup_cachedir = cleanup_cachedir,
+                                      read=read, write=write, read_through_write=read_through_write,
+                                      delete=delete, on_duplicate_key=on_duplicate_key)
+
 
         self.ssh_client = None
         if ssh_config is not None:
@@ -41,47 +57,18 @@ class SFTPStore(bs.BaseBlobStore):
                 return
             raise ValueError('You must specify a SFTP client by passing in one of: sftp_client, ssh_config, ssh_client')
 
-        self.cachedir = bs._abspath(cachedir)
-        self.basepath = basepath
-        self.cleanup_cachedir = cleanup_cachedir
-        mkdirp(self.cachedir)
-
-    def __del__(self):
-        if self.cleanup_cachedir:
-            shutil.rmtree(self.cachedir)
-
-    def _filename(self, id):
-        return os.path.join(self.cachedir, id)
-
-    def _path(self, id):
-        return os.path.join(self.basepath, id)
-
-    def __contains__(self, id):
-        cs.ensure_contains(self)
+    def _exists(self, path):
         try:
-            self.sftp_client.stat(self._path(id))
+            self.sftp_client.stat(path)
             return True
         except FileNotFoundError:
             return False
 
-    def _put_overwrite(self, id, value, serializer, read_through):
-        cs.ensure_put(self, id, read_through, check_contains=False)
-        filename = self._filename(id)
-        # not already saved by DiskStore?
-        if not os.path.isfile(filename):
-            with bs._atomic_write(filename) as temp:
-                serializer.dump(value, temp)
-        self.sftp_client.put(filename, self._path(id))
+    def _delete_remote(self, path):
+        self.sftp_client.remove(path)
 
-    def get(self, id, serializer=DEFAULT_VALUE_SERIALIZER, **_kargs):
-        cs.ensure_read(self)
-        cs.ensure_present(self, id)
-        filename = self._filename(id)
-        if not os.path.exists(filename):
-            with bs._atomic_write(filename) as temp:
-                self.sftp_client.get(self._path(id), temp)
-        return serializer.load(filename)
+    def _upload_file(self, filename, path):
+        self.sftp_client.put(filename, path)
 
-    def delete(self, id):
-        cs.ensure_delete(self, id)
-        self.sftp_client.remove(self._path(id))
+    def _download_file(self, remote_path, dest_filename):
+        self.sftp_client.get(remote_path, dest_filename)
