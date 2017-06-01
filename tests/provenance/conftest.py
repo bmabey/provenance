@@ -172,6 +172,10 @@ def dbdiskrepo(request, db_session):
     yield next(repo_gen)
     next(repo_gen, 'ignore')
 
+
+another_dbdiskrepo = dbdiskrepo
+
+
 @pytest.fixture(scope='function',
                 params=['memoryrepo' 'dbrepo-diskstore', 'dbrepo-memorystore'])
 def atomic_repo(request, db_session):
