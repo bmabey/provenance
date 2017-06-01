@@ -223,11 +223,11 @@ class S3Store(RemoteStore):
     def __init__(self, cachedir, basepath, s3_config=None, s3fs=None,
                  read=True, write=True, read_through_write=True,
                  delete=False, on_duplicate_key='skip', cleanup_cachedir=False,
-                 always_check_s3=False):
+                 always_check_remote=False):
         """
         Parameters
         ----------
-        always_check_s3 : bool
+        always_check_remote : bool
            When True S3 will be checked with every __contains__ call. Otherwise it will
         short-circuit if the blob is found in the cachedir. For performance reasons this
         should always be set to False. The only reason why you would want to use this
@@ -235,7 +235,7 @@ class S3Store(RemoteStore):
         some reason. Since the S3Store basically doubles as a DiskStore with it's cachedir
         chaining the two doesn't really make sense though.
         """
-        super(S3Store, self).__init__(always_check_remote=always_check_s3,
+        super(S3Store, self).__init__(always_check_remote=always_check_remote,
                                       cachedir = cachedir,
                                       basepath = basepath,
                                       cleanup_cachedir = cleanup_cachedir,
@@ -262,7 +262,7 @@ class S3Store(RemoteStore):
         self.s3fs.get(remote_path, dest_filename)
 
 
-    
+
 class ChainedStore(BaseBlobStore):
     def __init__(self, stores, read=True, write=True, read_through_write=True,
                  delete=True, on_duplicate_key='skip'):

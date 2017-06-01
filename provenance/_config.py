@@ -51,6 +51,19 @@ except ImportError as e:
     BLOBSTORE_TYPES['sftp'] = SFTPStore
 
 
+try:
+    import provenance.google_storage as gs
+    BLOBSTORE_TYPES['gs'] = gs.GSStore
+
+except ImportError as e:
+    class GSStore(object):
+        _err = e
+        def __init__(self, *args, **kargs):
+            raise(self._err)
+
+    BLOBSTORE_TYPES['gs'] = GSStore
+
+
 blobstore_from_config = atomic_item_from_config(type_dict=BLOBSTORE_TYPES,
                                            item_plural='Blobstores')
 

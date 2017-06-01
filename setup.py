@@ -7,6 +7,7 @@ import versioneer
 
 subpackages = {
     'sftp': ['paramiko'],
+    'google_storage': ['google-cloud'],
     'vis':  ['graphviz', 'frozendict']
 }
 
