@@ -10,6 +10,7 @@ dependencies:
 - numpydoc
 - sphinx
 - pandoc
+- ipykernel
 # for the docs
 - scikit-learn
 - pip:
