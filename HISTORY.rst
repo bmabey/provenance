@@ -3,6 +3,13 @@
 History
 =======
 
+0.11.0 (2018-08-23)
+------------
+* Optional Google Storage support.
+* Adds `persistent_connections` option to Postgres repo so NullPoll can be used when appropriate.
+* Doc tweaks.
+
+
 0.10.0 (2016-04-30)
 ------------
 
