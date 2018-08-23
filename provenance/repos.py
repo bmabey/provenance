@@ -582,8 +582,11 @@ def _set_search_path(schema, dbapi_connection, connection_record, connection_pro
     cursor.close()
 
 
-def _db_engine(conn_string, schema):
-    db_engine = sqlalchemy.create_engine(conn_string, json_serializer=Encoder().encode)
+def _db_engine(conn_string, schema, persistent_connections=True):
+    poolclass = None if persistent_connections else sqlalchemy.pool.NullPool
+    db_engine = sqlalchemy.create_engine(conn_string,
+                                         json_serializer=Encoder().encode,
+                                         poolclass=poolclass)
     sqlalchemy.event.listens_for(db_engine, "engine_connect")(_ping_postgres)
     sqlalchemy.event.listens_for(db_engine, "connect")(_record_pid)
     sqlalchemy.event.listens_for(db_engine, "checkout")(_check_pid)
@@ -634,7 +637,7 @@ class PostgresRepo(ArtifactRepository):
     # upgrade_db=True
     def __init__(self, db, store,
                  read=True, write=True, read_through_write=True, delete=True,
-                 create_db=False, schema=None, create_schema=True):
+                 create_db=False, schema=None, create_schema=True, persistent_connections=True):
         upgrade_db=False
         super(PostgresRepo, self).__init__(read=read, write=write,
                                            read_through_write=read_through_write,
@@ -654,7 +657,7 @@ class PostgresRepo(ArtifactRepository):
             if create_db:
                     init_db = True
 
-            self._db_engine = _db_engine(db, schema)
+            self._db_engine = _db_engine(db, schema, persistent_connections)
             self._sessionmaker = sqlalchemy.orm.sessionmaker(bind=self._db_engine)
         else:
             self._session = db
