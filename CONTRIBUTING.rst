@@ -79,10 +79,6 @@ Reactivating the environment after it has been created
 
     source activate provenance-dev
 
-    $ mkvirtualenv provenance
-    $ cd provenance/
-    $ python setup.py develop
-
 4. Create a branch for local development::
 
     $ git checkout -b name-of-your-bugfix-or-feature
