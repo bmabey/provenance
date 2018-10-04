@@ -70,7 +70,7 @@ class Hasher(Pickler):
         pickling.
     """
 
-    def __init__(self, hash_name='sha1'):
+    def __init__(self, hash_name='md5'):
         self.stream = io.BytesIO()
         # By default we want a pickle protocol that only changes with
         # the major python version and not the minor one
@@ -174,7 +174,7 @@ class NumpyHasher(Hasher):
     """ Special case the hasher for when numpy is loaded.
     """
 
-    def __init__(self, hash_name='sha1', coerce_mmap=True):
+    def __init__(self, hash_name='md5', coerce_mmap=True):
         """
             Parameters
             ----------
@@ -261,7 +261,7 @@ class NumpyHasher(Hasher):
         Hasher.save(self, obj)
 
 
-def hash(obj, hasher=None, hash_name='sha1', coerce_mmap=True):
+def hash(obj, hasher=None, hash_name='md5', coerce_mmap=True):
     """ Quick calculation of a hash to identify uniquely Python objects
         containing numpy arrays. The difference with this hash and joblib
         is that it tries to hash different mutable objects with the same
@@ -285,7 +285,7 @@ def hash(obj, hasher=None, hash_name='sha1', coerce_mmap=True):
     return hasher.hash(obj)
 
 
-def file_hash(filename, hash_name='sha1'):
+def file_hash(filename, hash_name='md5'):
     """Streams the bytes of the given file through either md5 or sha1
        and returns the hexdigest.
     """
