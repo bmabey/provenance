@@ -21,3 +21,4 @@ examples/**/artifacts/
 examples/**/blobstore/
 .ipynb_checkpoints
 docs/build
+.pytest_cache/
