@@ -2,10 +2,12 @@ import toolz as t
 import pytest
 import tempfile
 import pandas as pd
+from pandas.testing import assert_frame_equal, assert_series_equal
 import os
 import shutil
 import provenance as p
 import provenance.core as pc
+import provenance.serializers as s
 import provenance.repos as r
 import provenance.utils as u
 from provenance.hashing import hash
@@ -288,7 +290,32 @@ def test_serialization_of_lambdas(repo):
     assert doubler(2) == 4
 
     doubler_fetched = repo.get_by_id(doubler.artifact.id).value
-    assert doubler(5) == 10
+
+
+def test_serialization_of_dataframes_uses_parquet(repo):
+
+    @p.provenance()
+    def make_df(rows):
+        return pd.DataFrame(rows)
+
+    df = make_df([{"foo": 42}, {"foo": 100}])
+    df_fetched = repo.get_by_id(df.artifact.id).value
+
+    assert df.artifact.serializer == 'pd_df_parquet'
+    assert_frame_equal(df, df_fetched)
+
+
+def test_serialization_of_series_uses_parquet(repo):
+
+    @p.provenance()
+    def make_series(row):
+        return pd.Series(row)
+
+    series = make_series({"foo": 42})
+    series_fetched = repo.get_by_id(series.artifact.id).value
+
+    assert series.artifact.serializer == 'pd_series_parquet'
+    assert_series_equal(series, series_fetched)
 
 
 def test_composite_artifacts(repo):
@@ -314,6 +341,18 @@ def test_composite_artifacts(repo):
 
     # Check that the correct load_kwargs are set
     assert results['b'].artifact.load_kwargs == {'memmap': True}
+
+
+def test_serialization_of_dataframes_in_composites_uses_parquet(repo):
+
+    @p.provenance(returns_composite=True)
+    def make_comp(rows):
+        return {'df': pd.DataFrame(rows), 'dicts': rows}
+
+    comp = make_comp([{"foo": 42}, {"foo": 100}])
+
+    assert comp['df'].artifact.serializer == 'pd_df_parquet'
+    assert comp['dicts'].artifact.serializer == 'joblib'
 
 
 def test_does_not_allow_argument_mutation(repo):

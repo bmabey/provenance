@@ -14,7 +14,6 @@ from . import serializers as s
 from . import utils
 from ._dependencies import dependencies
 from .hashing import file_hash, hash
-from .serializers import DEFAULT_VALUE_SERIALIZER
 
 
 class ImpureFunctionError(Exception):
@@ -83,10 +82,11 @@ def fn_info(f):
         info['delete_original_file'] = metadata['delete_original_file']
         valid_serializer = True
     else:
-        info['serializer'] = metadata.get('serializer', DEFAULT_VALUE_SERIALIZER.name) or DEFAULT_VALUE_SERIALIZER.name
+        info['serializer'] = metadata.get('serializer', 'auto') or 'auto'
         info['load_kwargs'] = metadata.get('load_kwargs', None)
         info['dump_kwargs'] = metadata.get('dump_kwargs', None)
-        valid_serializer = info['serializer'] in s.serializers
+        valid_serializer = (info['serializer'] == 'auto'
+                            or info['serializer'] in s.serializers)
 
     if not valid_serializer:
         msg = 'Invalid serializer option "{}" for artifact "{}", available serialziers: {} '.\
@@ -147,9 +147,14 @@ def composite_artifact(repo, _run_info, inputs, input_hashes, input_artifact_ids
     info = copy(artifact_info)
     info['composite'] = False
     info['name'] = '{}_{}'.format(info['name'], key)
-    info['serializer'] = info['serializer'].get(key, DEFAULT_VALUE_SERIALIZER.name)
+    info['serializer'] = info['serializer'].get(key, 'auto')
     info['load_kwargs'] = info['load_kwargs'].get(key, None)
     info['dump_kwargs'] = info['dump_kwargs'].get(key, None)
+
+
+
+    if info['serializer'] == 'auto':
+        info['serializer'] =  s.object_serializer(value)
 
     id = create_id(input_hashes, input_hash_fn, info['name'], info['version'])
     hash_duration = time.time() - start_hash_time
@@ -301,9 +306,14 @@ def provenance_wrapper(repo, f):
                                         artifact_info, compute_duration,
                                         computed_at, use_cache)
                 value = {k: ca(k, v) for k, v in value.items()}
-                artifact_info_['serializer'] = DEFAULT_VALUE_SERIALIZER.name
+                artifact_info_['serializer'] = 'auto'
                 artifact_info_['load_kwargs'] = None
                 artifact_info_['dump_kwargs'] = None
+
+
+            if artifact_info_['serializer'] == 'auto':
+                artifact_info_['serializer'] =  s.object_serializer(value)
+
 
 
             start_value_id_time = time.time()
