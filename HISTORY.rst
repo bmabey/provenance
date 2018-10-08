@@ -3,6 +3,15 @@
 History
 =======
 
+
+0.12.0 (2018-10-08)
+------------
+* Change default hashing algorithm to MD5 since SHA1 for performance considerations.
+* Extends serialziaiton so the type used is inferred off of type.
+* Makes the default serializer for Pandas DataFrames and Series to use Parquet.
+* (breaking change!) Remove names from ArtifactSets, use a JSONB of labels instead.
+* Doc tweaks.
+
 0.11.0 (2018-08-23)
 ------------
 * Optional Google Storage support.
