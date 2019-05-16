@@ -87,18 +87,18 @@ def fn_info(f):
             )
         info['serializer'] = 'file'
         info['load_kwargs'] = metadata['load_kwargs'] or {}
-        info['dump_kwargs'] = (metadata['dump_kwargs'] or {
-            'delete_original':
-            metadata['delete_original_file']
-        })
+        info['dump_kwargs'] = (
+            metadata['dump_kwargs'] or {
+                'delete_original': metadata['delete_original_file']
+            })
         info['delete_original_file'] = metadata['delete_original_file']
         valid_serializer = True
     else:
         info['serializer'] = metadata.get('serializer', 'auto') or 'auto'
         info['load_kwargs'] = metadata.get('load_kwargs', None)
         info['dump_kwargs'] = metadata.get('dump_kwargs', None)
-        valid_serializer = (info['serializer'] == 'auto' or
-                            info['serializer'] in s.serializers)
+        valid_serializer = (
+            info['serializer'] == 'auto' or info['serializer'] in s.serializers)
 
     if not valid_serializer:
         msg = 'Invalid serializer option "{}" for artifact "{}", available serialziers: {} '.\
@@ -179,17 +179,18 @@ def composite_artifact(repo, _run_info, inputs, input_hashes,
     try:
         artifact = repo.get_by_id(id)
     except KeyError:
-        record = ArtifactRecord(id=id,
-                                value_id=value_id,
-                                value=value,
-                                input_artifact_ids=input_artifact_ids,
-                                value_id_duration=value_id_duration,
-                                compute_duration=compute_duration,
-                                hash_duration=hash_duration,
-                                computed_at=computed_at,
-                                inputs=inputs,
-                                run_info=_run_info,
-                                **info)
+        record = ArtifactRecord(
+            id=id,
+            value_id=value_id,
+            value=value,
+            input_artifact_ids=input_artifact_ids,
+            value_id_duration=value_id_duration,
+            compute_duration=compute_duration,
+            hash_duration=hash_duration,
+            computed_at=computed_at,
+            inputs=inputs,
+            run_info=_run_info,
+            **info)
         if read_only:
             artifact = repos._artifact_from_record(repo, record)
         else:
@@ -365,17 +366,18 @@ def provenance_wrapper(repo, f):
                     artifact = None
 
             if artifact is None:
-                record = ArtifactRecord(id=id,
-                                        value_id=value_id,
-                                        value=value,
-                                        input_artifact_ids=input_artifact_ids,
-                                        value_id_duration=value_id_duration,
-                                        compute_duration=compute_duration,
-                                        hash_duration=hash_duration,
-                                        computed_at=computed_at,
-                                        run_info=_run_info,
-                                        inputs=inputs,
-                                        **artifact_info_)
+                record = ArtifactRecord(
+                    id=id,
+                    value_id=value_id,
+                    value=value,
+                    input_artifact_ids=input_artifact_ids,
+                    value_id_duration=value_id_duration,
+                    compute_duration=compute_duration,
+                    hash_duration=hash_duration,
+                    computed_at=computed_at,
+                    run_info=_run_info,
+                    inputs=inputs,
+                    **artifact_info_)
                 if read_only:
                     artifact = repos._artifact_from_record(r, record)
                 else:
@@ -743,12 +745,13 @@ def archive_file(filename,
     # filename (see remove) but not the custom_fields.
     # filename is still passed in so the hash of the file on disk can be
     # computed as part of the id of the artifact.
-    @provenance(archive_file=True,
-                name=name or 'archive_file',
-                preserve_file_ext=preserve_ext,
-                delete_original_file=delete_original,
-                remove=['_archive_file_filename'],
-                custom_fields=custom_fields)
+    @provenance(
+        archive_file=True,
+        name=name or 'archive_file',
+        preserve_file_ext=preserve_ext,
+        delete_original_file=delete_original,
+        remove=['_archive_file_filename'],
+        custom_fields=custom_fields)
     def _archive_file(_archive_file_filename, custom_fields):
         return filename
 
@@ -776,8 +779,8 @@ def provenance_set(set_labels=None, initial_set=None, set_labels_fn=None):
             else:
                 labels = set_labels
 
-            with repos.capture_set(labels=labels,
-                                   initial_set=initial_set) as result:
+            with repos.capture_set(
+                    labels=labels, initial_set=initial_set) as result:
                 f(*fargs, **fkargs)
             return result[0]
 

@@ -31,8 +31,9 @@ def args_extractor(f, merge_defaults=False):
         merge_defaults = f.__merge_defaults__
 
     if merge_defaults:
-        default_dicts = t.pipe(t.merge(named_param_defaults, param_defaults),
-                               tc.valfilter(lambda v: isinstance(v, dict)))
+        default_dicts = t.pipe(
+            t.merge(named_param_defaults, param_defaults),
+            tc.valfilter(lambda v: isinstance(v, dict)))
 
         if isinstance(merge_defaults, Sequence):
             default_dicts = {k: default_dicts[k] for k in merge_defaults}

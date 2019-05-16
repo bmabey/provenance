@@ -81,17 +81,17 @@ def _viz_artifact(artifact, g):
     function_id = "fn_" + artifact.id
     fn_qalified_name = ".".join([artifact.fn_module, artifact.fn_name])
     fn_name = artifact.fn_name
-    fn_params = "{fn}({params})".format(fn=fn_qalified_name,
-                                        params=','.join(
-                                            artifact.inputs['kargs'].keys()))
+    fn_params = "{fn}({params})".format(
+        fn=fn_qalified_name, params=','.join(artifact.inputs['kargs'].keys()))
 
     g.node(function_id, fn_name, shape="circle", tooltip=fn_params)
     g.edge(function_id, artifact.id)
-    g.node(artifact.id,
-           label=artifact_record(artifact, elide_len=15),
-           shape="record",
-           tooltip=elide(artifact.value, 50),
-           color='red')
+    g.node(
+        artifact.id,
+        label=artifact_record(artifact, elide_len=15),
+        shape="record",
+        tooltip=elide(artifact.value, 50),
+        color='red')
 
     # ignore varargs for now...
     for name, val in artifact.inputs['kargs'].items():

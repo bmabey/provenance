@@ -112,11 +112,12 @@ def test_with_merged_defaults_with_non_dict_args():
         return a, baz, foo
 
     assert bar(5) == (5, None, {'a': 1, 'b': 2})
-    assert bar(5, baz='baz', foo={'c': 3}) == (5, 'baz', {
-        'a': 1,
-        'b': 2,
-        'c': 3
-    })
+    assert bar(
+        5, baz='baz', foo={'c': 3}) == (5, 'baz', {
+            'a': 1,
+            'b': 2,
+            'c': 3
+        })
 
 
 def test_with_merged_defaults_with_args_splat():

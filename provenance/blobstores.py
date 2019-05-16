@@ -76,11 +76,12 @@ class MemoryStore(BaseBlobStore):
                  read_through_write=True,
                  delete=True,
                  on_duplicate_key='skip'):
-        super(MemoryStore, self).__init__(read=read,
-                                          write=write,
-                                          read_through_write=read_through_write,
-                                          delete=delete,
-                                          on_duplicate_key=on_duplicate_key)
+        super(MemoryStore, self).__init__(
+            read=read,
+            write=write,
+            read_through_write=read_through_write,
+            delete=delete,
+            on_duplicate_key=on_duplicate_key)
         if values is None:
             self.values = {}
         else:
@@ -135,11 +136,12 @@ class DiskStore(BaseBlobStore):
                  read_through_write=True,
                  delete=False,
                  on_duplicate_key='skip'):
-        super(DiskStore, self).__init__(read=read,
-                                        write=write,
-                                        read_through_write=read_through_write,
-                                        delete=delete,
-                                        on_duplicate_key=on_duplicate_key)
+        super(DiskStore, self).__init__(
+            read=read,
+            write=write,
+            read_through_write=read_through_write,
+            delete=delete,
+            on_duplicate_key=on_duplicate_key)
         self.cachedir = _abspath(cachedir)
         mkdirp(self.cachedir)
 
@@ -188,11 +190,12 @@ class RemoteStore(BaseBlobStore):
         some reason. Since the RemoteStore basically doubles as a DiskStore with it's cachedir
         chaining the two doesn't really make sense though.
         """
-        super(RemoteStore, self).__init__(read=read,
-                                          write=write,
-                                          read_through_write=read_through_write,
-                                          delete=delete,
-                                          on_duplicate_key=on_duplicate_key)
+        super(RemoteStore, self).__init__(
+            read=read,
+            write=write,
+            read_through_write=read_through_write,
+            delete=delete,
+            on_duplicate_key=on_duplicate_key)
 
         self.always_check = always_check_remote
 
@@ -282,15 +285,16 @@ class S3Store(RemoteStore):
         some reason. Since the S3Store basically doubles as a DiskStore with it's cachedir
         chaining the two doesn't really make sense though.
         """
-        super(S3Store, self).__init__(always_check_remote=always_check_remote,
-                                      cachedir=cachedir,
-                                      basepath=basepath,
-                                      cleanup_cachedir=cleanup_cachedir,
-                                      read=read,
-                                      write=write,
-                                      read_through_write=read_through_write,
-                                      delete=delete,
-                                      on_duplicate_key=on_duplicate_key)
+        super(S3Store, self).__init__(
+            always_check_remote=always_check_remote,
+            cachedir=cachedir,
+            basepath=basepath,
+            cleanup_cachedir=cleanup_cachedir,
+            read=read,
+            write=write,
+            read_through_write=read_through_write,
+            delete=delete,
+            on_duplicate_key=on_duplicate_key)
 
         if s3fs:
             self.s3fs = s3fs
@@ -322,12 +326,12 @@ class ChainedStore(BaseBlobStore):
                  read_through_write=True,
                  delete=True,
                  on_duplicate_key='skip'):
-        super(ChainedStore,
-              self).__init__(read=read,
-                             write=write,
-                             read_through_write=read_through_write,
-                             delete=delete,
-                             on_duplicate_key=on_duplicate_key)
+        super(ChainedStore, self).__init__(
+            read=read,
+            write=write,
+            read_through_write=read_through_write,
+            delete=delete,
+            on_duplicate_key=on_duplicate_key)
         self.stores = stores
 
     def __contains__(self, id):
@@ -337,11 +341,8 @@ class ChainedStore(BaseBlobStore):
         return cs.chained_filename(self, id)
 
     def _put_overwrite(self, id, value, serializer, read_through):
-        return cs.chained_put(self,
-                              id,
-                              value,
-                              overwrite=True,
-                              serializer=serializer)
+        return cs.chained_put(
+            self, id, value, overwrite=True, serializer=serializer)
 
     def get(self, id, serializer=DEFAULT_VALUE_SERIALIZER, **kargs):
 

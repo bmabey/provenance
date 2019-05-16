@@ -69,8 +69,8 @@ except ImportError as e:
 
     BLOBSTORE_TYPES['gs'] = GSStore
 
-blobstore_from_config = atomic_item_from_config(type_dict=BLOBSTORE_TYPES,
-                                                item_plural='Blobstores')
+blobstore_from_config = atomic_item_from_config(
+    type_dict=BLOBSTORE_TYPES, item_plural='Blobstores')
 
 REPO_TYPES = {
     'postgres': r.PostgresRepo,
@@ -78,8 +78,8 @@ REPO_TYPES = {
     'chained': r.ChainedRepo
 }
 
-repo_from_config = atomic_item_from_config(type_dict=REPO_TYPES,
-                                           item_plural='Artifact Repos')
+repo_from_config = atomic_item_from_config(
+    type_dict=REPO_TYPES, item_plural='Artifact Repos')
 
 
 def items_from_config(config, atomic_from_config, items_name, item_type,
@@ -95,10 +95,11 @@ def items_from_config(config, atomic_from_config, items_name, item_type,
                     atomic_stores[k] = store
         except Exception as e:
             if not silence_warnings:
-                logger.warning("Error creating %s %s from config - Skipping",
-                               item_type,
-                               k,
-                               exc_info=True)
+                logger.warning(
+                    "Error creating %s %s from config - Skipping",
+                    item_type,
+                    k,
+                    exc_info=True)
 
     def create_chained(name, config):
         # resolve the stores
@@ -122,10 +123,11 @@ def items_from_config(config, atomic_from_config, items_name, item_type,
                     chained_stores[k] = store
         except Exception as e:
             if not silence_warnings:
-                logger.warning("Error creating %s %s from config - Skipping",
-                               item_type,
-                               k,
-                               exc_info=True)
+                logger.warning(
+                    "Error creating %s %s from config - Skipping",
+                    item_type,
+                    k,
+                    exc_info=True)
 
     return t.merge(chained_stores, atomic_stores)
 
@@ -162,13 +164,14 @@ def from_config(config):
 
 def load_config(config):
     objs = from_config(config)
-    pconfig = r.Config(objs['blobstores'],
-                       objs['repos'],
-                       default_repo=config['default_repo'],
-                       run_info_fn=config.get('run_info_fn', None),
-                       use_cache=config.get('use_cache', True),
-                       read_only=config.get('read_only', False),
-                       check_mutations=config.get('check_mutations', False))
+    pconfig = r.Config(
+        objs['blobstores'],
+        objs['repos'],
+        default_repo=config['default_repo'],
+        run_info_fn=config.get('run_info_fn', None),
+        use_cache=config.get('use_cache', True),
+        read_only=config.get('read_only', False),
+        check_mutations=config.get('check_mutations', False))
     r.Config.set_current(pconfig)
     return pconfig
 

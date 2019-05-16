@@ -57,15 +57,16 @@ class GSStore(bs.RemoteStore):
         some reason. Since the GSStore basically doubles as a DiskStore with it's cachedir
         chaining the two doesn't really make sense though.
         """
-        super(GSStore, self).__init__(always_check_remote=always_check_remote,
-                                      cachedir=cachedir,
-                                      basepath=basepath,
-                                      cleanup_cachedir=cleanup_cachedir,
-                                      read=read,
-                                      write=write,
-                                      read_through_write=read_through_write,
-                                      delete=delete,
-                                      on_duplicate_key=on_duplicate_key)
+        super(GSStore, self).__init__(
+            always_check_remote=always_check_remote,
+            cachedir=cachedir,
+            basepath=basepath,
+            cleanup_cachedir=cleanup_cachedir,
+            read=read,
+            write=write,
+            read_through_write=read_through_write,
+            delete=delete,
+            on_duplicate_key=on_duplicate_key)
 
         self.bucket_name = bucket
         self.project = project

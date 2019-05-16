@@ -89,10 +89,11 @@ if _pandas_and_parquet_present():
     def pd_df_parquet_load(filename, **kwargs):
         return pd.read_parquet(filename, **kwargs)
 
-    register_serializer('pd_df_parquet',
-                        pd_df_parquet_dump,
-                        pd_df_parquet_load,
-                        classes=[pd.DataFrame])
+    register_serializer(
+        'pd_df_parquet',
+        pd_df_parquet_dump,
+        pd_df_parquet_load,
+        classes=[pd.DataFrame])
 
     def pd_series_parquet_dump(series, filename, **kwargs):
         if series.name is None:
@@ -106,10 +107,11 @@ if _pandas_and_parquet_present():
             series.name = None
         return series
 
-    register_serializer('pd_series_parquet',
-                        pd_series_parquet_dump,
-                        pd_series_parquet_load,
-                        classes=[pd.Series])
+    register_serializer(
+        'pd_series_parquet',
+        pd_series_parquet_dump,
+        pd_series_parquet_load,
+        classes=[pd.Series])
 
 
 @t.memoize(key=lambda *args: hash(args))

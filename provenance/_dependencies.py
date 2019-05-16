@@ -16,8 +16,9 @@ class DependencyWalker(Pickler):
         self.stream = io.BytesIO()
         self.dependents = []
         self.branches = []
-        protocol = (pickle.DEFAULT_PROTOCOL
-                    if PY3_OR_LATER else pickle.HIGHEST_PROTOCOL)
+        protocol = (
+            pickle.DEFAULT_PROTOCOL
+            if PY3_OR_LATER else pickle.HIGHEST_PROTOCOL)
         Pickler.__init__(self, self.stream, protocol=protocol)
 
     def save(self, obj):

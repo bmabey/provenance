@@ -35,9 +35,8 @@ class NumpyArtifactHasher(h.NumpyHasher):
             artifacts = {}
 
         self.artifacts = artifacts
-        h.NumpyHasher.__init__(self,
-                               hash_name=hash_name,
-                               coerce_mmap=coerce_mmap)
+        h.NumpyHasher.__init__(
+            self, hash_name=hash_name, coerce_mmap=coerce_mmap)
 
     def save(self, obj):
         _save(obj, self.artifacts)

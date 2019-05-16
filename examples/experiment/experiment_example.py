@@ -68,12 +68,14 @@ def save_entry(id, name, age, address, matrix):
         with open(os.path.join(directory, 'matrix.csv'), 'w') as matrixf:
             writer = csv.writer(matrixf)
             writer.writerows(matrix)
-        p.archive_file(os.path.join(directory, 'demographic.json'),
-                       name=id + '/demographic',
-                       delete_original=True)
-        p.archive_file(os.path.join(directory, 'matrix.csv'),
-                       name=id + '/matrix',
-                       delete_original=True)
+        p.archive_file(
+            os.path.join(directory, 'demographic.json'),
+            name=id + '/demographic',
+            delete_original=True)
+        p.archive_file(
+            os.path.join(directory, 'matrix.csv'),
+            name=id + '/matrix',
+            delete_original=True)
 
     write_entry()
 

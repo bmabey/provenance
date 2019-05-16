@@ -105,9 +105,8 @@ def test_archived_file_used_in_input(dbdiskrepo):
         to_csv(data_filename, index=False)
 
     assert os.path.exists(data_filename)
-    archived_file = p.archive_file(data_filename,
-                                   delete_original=True,
-                                   custom_fields={'foo': 'bar'})
+    archived_file = p.archive_file(
+        data_filename, delete_original=True, custom_fields={'foo': 'bar'})
     assert not os.path.exists(data_filename)
     assert archived_file.artifact.custom_fields == {'foo': 'bar'}
 
@@ -178,9 +177,8 @@ def test_archived_file_allows_extensions_to_be_ignored(dbdiskrepo):
     pd.DataFrame({'a': [0, 1, 2], 'b': [10, 11, 12]}).\
         to_csv(data_filename, index=False)
 
-    archived_file = p.archive_file(data_filename,
-                                   delete_original=True,
-                                   preserve_ext=False)
+    archived_file = p.archive_file(
+        data_filename, delete_original=True, preserve_ext=False)
 
     assert not archived_file.artifact.value_id.endswith('.csv')
 
@@ -192,9 +190,8 @@ def test_archived_file_canonicalizes_file_extenstions(dbdiskrepo):
     data_filename = os.path.join(tmp_dir, 'foo.MPEG')
     spit(data_filename, "blah")
 
-    archived_file = p.archive_file(data_filename,
-                                   delete_original=True,
-                                   preserve_ext=True)
+    archived_file = p.archive_file(
+        data_filename, delete_original=True, preserve_ext=True)
 
     assert archived_file.artifact.value_id.endswith('.mpg')
 
@@ -337,11 +334,12 @@ def test_serialization_of_series_uses_parquet(repo):
 
 def test_composite_artifacts(repo):
 
-    @p.provenance(returns_composite=True,
-                  serializer={'a': 'cloudpickle'},
-                  load_kwargs={'b': {
-                      'memmap': True
-                  }})
+    @p.provenance(
+        returns_composite=True,
+        serializer={'a': 'cloudpickle'},
+        load_kwargs={'b': {
+            'memmap': True
+        }})
     def load_data():
         return {'a': 1, 'b': 2, 'c': 3}
 

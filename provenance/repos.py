@@ -447,11 +447,12 @@ def _artifact_id(artifact_or_id):
 def _artifact_from_record(repo, record):
     if isinstance(record, Artifact):
         return record
-    return Artifact(repo,
-                    t.dissoc(record._asdict(), 'value', 'inputs', 'run_info'),
-                    value=record.value,
-                    inputs=record.inputs,
-                    run_info=record.run_info)
+    return Artifact(
+        repo,
+        t.dissoc(record._asdict(), 'value', 'inputs', 'run_info'),
+        value=record.value,
+        inputs=record.inputs,
+        run_info=record.run_info)
 
 
 class ArtifactRepository(object):
@@ -482,10 +483,11 @@ class MemoryRepo(ArtifactRepository):
                  write=True,
                  read_through_write=True,
                  delete=True):
-        super(MemoryRepo, self).__init__(read=read,
-                                         write=write,
-                                         read_through_write=read_through_write,
-                                         delete=delete)
+        super(MemoryRepo, self).__init__(
+            read=read,
+            write=write,
+            read_through_write=read_through_write,
+            delete=delete)
         self.artifacts = artifacts if artifacts else []
         self.sets = []
 
@@ -653,15 +655,14 @@ def _set_search_path(schema, dbapi_connection, connection_record,
 
 def _db_engine(conn_string, schema, persistent_connections=True):
     poolclass = None if persistent_connections else sqlalchemy.pool.NullPool
-    db_engine = sqlalchemy.create_engine(conn_string,
-                                         json_serializer=Encoder().encode,
-                                         poolclass=poolclass)
+    db_engine = sqlalchemy.create_engine(
+        conn_string, json_serializer=Encoder().encode, poolclass=poolclass)
     sqlalchemy.event.listens_for(db_engine, "engine_connect")(_ping_postgres)
     sqlalchemy.event.listens_for(db_engine, "connect")(_record_pid)
     sqlalchemy.event.listens_for(db_engine, "checkout")(_check_pid)
     if schema:
-        sqlalchemy.event.listens_for(db_engine,
-                                     "checkout")(_set_search_path(schema))
+        sqlalchemy.event.listens_for(db_engine, "checkout")(
+            _set_search_path(schema))
     return db_engine
 
 
@@ -718,11 +719,11 @@ class PostgresRepo(ArtifactRepository):
                  create_schema=True,
                  persistent_connections=True):
         upgrade_db = False
-        super(PostgresRepo,
-              self).__init__(read=read,
-                             write=write,
-                             read_through_write=read_through_write,
-                             delete=delete)
+        super(PostgresRepo, self).__init__(
+            read=read,
+            write=write,
+            read_through_write=read_through_write,
+            delete=delete)
 
         if not isinstance(db, string_type) and schema is not None:
             raise ValueError("You can only provide a schema with a DB url.")
@@ -906,8 +907,9 @@ class PostgresRepo(ArtifactRepository):
 
     def _db_to_mem_set(self, result):
         with self.session() as session:
-            members = (session.query(db.ArtifactSetMember).filter(
-                db.ArtifactSetMember.set_id == result.set_id).all())
+            members = (
+                session.query(db.ArtifactSetMember).filter(
+                    db.ArtifactSetMember.set_id == result.set_id).all())
             props = result.props
             props['artifact_ids'] = [m.artifact_id for m in members]
             return ArtifactSet(**props)
@@ -923,8 +925,9 @@ class PostgresRepo(ArtifactRepository):
     def get_set_by_id(self, set_id):
         cs.ensure_read(self)
         with self.session() as session:
-            result = (session.query(
-                db.ArtifactSet).filter(db.ArtifactSet.set_id == set_id).first())
+            result = (
+                session.query(db.ArtifactSet).filter(
+                    db.ArtifactSet.set_id == set_id).first())
 
         if result:
             return self._db_to_mem_set(result)
@@ -936,9 +939,10 @@ class PostgresRepo(ArtifactRepository):
         labels = _check_labels_name(labels)
 
         with self.session() as session:
-            result = (session.query(db.ArtifactSet).filter(
-                db.ArtifactSet.labels == labels).order_by(
-                    db.ArtifactSet.created_at.desc()).first())
+            result = (
+                session.query(db.ArtifactSet).filter(
+                    db.ArtifactSet.labels == labels).order_by(
+                        db.ArtifactSet.created_at.desc()).first())
 
         if result:
             return self._db_to_mem_set(result)
@@ -948,8 +952,9 @@ class PostgresRepo(ArtifactRepository):
     def delete_set(self, set_id):
         cs.ensure_delete(self, check_contains=False)
         with self.session() as session:
-            num_deleted = (session.query(db.ArtifactSet).filter(
-                db.ArtifactSet.set_id == set_id).delete())
+            num_deleted = (
+                session.query(db.ArtifactSet).filter(
+                    db.ArtifactSet.set_id == set_id).delete())
             (session.query(db.ArtifactSetMember).filter(
                 db.ArtifactSetMember.set_id == set_id).delete())
 
@@ -958,9 +963,10 @@ class PostgresRepo(ArtifactRepository):
 
     def run_info(self, artifact_id):
         with self.session() as session:
-            result = (session.query(
-                db.Run).filter(db.Run.id == db.Artifact.run_id).filter(
-                    db.Artifact.id == artifact_id).first())
+            result = (
+                session.query(
+                    db.Run).filter(db.Run.id == db.Artifact.run_id).filter(
+                        db.Artifact.id == artifact_id).first())
             return result.info_with_datetimes
 
     def _filename(self, artifact_id):
@@ -998,11 +1004,8 @@ class ChainedRepo(ArtifactRepository):
         return cs.chained_put(self, record.id, record, put=_put_only_value)
 
     def put_set(self, artifact_set, read_through=False):
-        return cs.chained_put(self,
-                              None,
-                              artifact_set,
-                              contains=_contains_set,
-                              put=_put_set)
+        return cs.chained_put(
+            self, None, artifact_set, contains=_contains_set, put=_put_set)
 
     def get_by_id(self, artifact_id):
 
@@ -1029,10 +1032,8 @@ class ChainedRepo(ArtifactRepository):
         return cs.chained_get(self, get, set_name, put=_put_set)
 
     def delete_set(self, id):
-        return cs.chained_delete(self,
-                                 id,
-                                 contains=_contains_set,
-                                 delete=_delete_set)
+        return cs.chained_delete(
+            self, id, contains=_contains_set, delete=_delete_set)
 
     def get_by_value_id(self, value_id):
 
