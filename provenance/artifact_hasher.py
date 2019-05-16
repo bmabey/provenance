@@ -12,6 +12,7 @@ def _save(obj, artifacts):
 
 
 class ArtifactHasher(h.Hasher):
+
     def __init__(self, artifacts=None, hash_name='md5'):
         if artifacts is None:
             artifacts = {}
@@ -28,12 +29,15 @@ class ArtifactHasher(h.Hasher):
 
 
 class NumpyArtifactHasher(h.NumpyHasher):
+
     def __init__(self, artifacts=None, hash_name='md5', coerce_mmap=True):
         if artifacts is None:
             artifacts = {}
 
         self.artifacts = artifacts
-        h.NumpyHasher.__init__(self, hash_name=hash_name, coerce_mmap=coerce_mmap)
+        h.NumpyHasher.__init__(self,
+                               hash_name=hash_name,
+                               coerce_mmap=coerce_mmap)
 
     def save(self, obj):
         _save(obj, self.artifacts)

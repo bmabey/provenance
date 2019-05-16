@@ -9,6 +9,7 @@ import hypothesis.strategies as st
 
 from strategies import data
 
+
 @given(data)
 def test_shallow_and_deep_copies_hashing(o):
     original_hash = hash(o)
@@ -28,31 +29,29 @@ def test_shared_values_hashing(base_data):
 
     assert hash(shared_dict) == hash(without_sharing_dict)
 
-
     shared_tuple = (base_data, base_data)
     without_sharing_tuple = (base_copy(), base_copy())
 
     assert hash(shared_tuple) == hash(without_sharing_tuple)
-
 
     shared_list = [base_data, base_data]
     without_sharing_list = [base_copy(), base_copy()]
 
     assert hash(shared_list) == hash(without_sharing_list)
 
+
 def test_hash_of_contiguous_array_is_the_same_as_noncontiguous():
-    a = np.asarray(np.arange(6000).reshape((1000, 2, 3)),
-                   order='F')[:, :1, :]
+    a = np.asarray(np.arange(6000).reshape((1000, 2, 3)), order='F')[:, :1, :]
     b = np.ascontiguousarray(a)
     assert hash(a) == hash(b)
 
+
 def test_hash_of_fortran_array_is_the_same_as_c_array():
-    c = np.asarray(np.arange(6000).reshape((1000, 2, 3)),
-                   order='C')
-    f = np.asarray(np.arange(6000).reshape((1000, 2, 3)),
-                   order='F')
+    c = np.asarray(np.arange(6000).reshape((1000, 2, 3)), order='C')
+    f = np.asarray(np.arange(6000).reshape((1000, 2, 3)), order='F')
 
     assert hash(c) == hash(f)
+
 
 def test_hashing_of_functions():
 
@@ -60,6 +59,7 @@ def test_hashing_of_functions():
         return a + b
 
     assert hash(foo) == hash(foo)
+
 
 def test_hashing_of_artifacts_and_proxies(repo):
 
@@ -87,7 +87,9 @@ def test_hashing_of_artifacts_and_proxies(repo):
     # Proxies and values should have the same hash
     assert hash(original_proxy) == hash(original_artifact.value)
 
-def test_hashing_with_artifact_hasher_also_returns_iter_of_artifacts_preserves_hash(repo):
+
+def test_hashing_with_artifact_hasher_also_returns_iter_of_artifacts_preserves_hash(
+        repo):
 
     @p.provenance()
     def load_data():
@@ -107,22 +109,26 @@ def test_hashing_with_artifact_hasher_also_returns_iter_of_artifacts_preserves_h
     expected_proxy_ids = frozenset((original_artifact.id, data.artifact.id))
     expected_artifact_ids = frozenset((original_artifact.id,))
 
-    original_proxy_hash, artifacts = hash(original_proxy, hasher=ah.artifact_hasher())
+    original_proxy_hash, artifacts = hash(original_proxy,
+                                          hasher=ah.artifact_hasher())
     ids = frozenset(a.id for a in artifacts)
     assert original_proxy_hash == hash(original_proxy)
     assert ids == expected_proxy_ids
 
-    original_artifact_hash, artifacts = hash(original_artifact, hasher=ah.artifact_hasher())
+    original_artifact_hash, artifacts = hash(original_artifact,
+                                             hasher=ah.artifact_hasher())
     ids = frozenset(a.id for a in artifacts)
     assert original_artifact_hash == hash(original_artifact)
     assert ids == expected_artifact_ids
 
-    loaded_artifact_hash, artifacts = hash(loaded_artifact, hasher=ah.artifact_hasher())
+    loaded_artifact_hash, artifacts = hash(loaded_artifact,
+                                           hasher=ah.artifact_hasher())
     ids = frozenset(a.id for a in artifacts)
     assert loaded_artifact_hash == hash(loaded_artifact)
     assert ids == expected_artifact_ids
 
-    loaded_proxy_hash, artifacts = hash(loaded_proxy, hasher=ah.artifact_hasher())
+    loaded_proxy_hash, artifacts = hash(loaded_proxy,
+                                        hasher=ah.artifact_hasher())
     ids = frozenset(a.id for a in artifacts)
     assert loaded_proxy_hash == hash(loaded_proxy)
     assert ids == expected_proxy_ids

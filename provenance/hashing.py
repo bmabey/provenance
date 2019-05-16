@@ -27,7 +27,6 @@ import decimal
 from joblib._compat import _bytes_or_unicode, PY3_OR_LATER
 
 
-
 @singledispatch
 def value_repr(obj):
     method = getattr(obj, "value_repr", None)
@@ -39,10 +38,12 @@ def value_repr(obj):
 
 Pickler = cloudpickle.CloudPickler
 
+
 class _ConsistentSet(object):
     """ Class used to ensure the hash of Sets is preserved
         whatever the order of its items.
     """
+
     def __init__(self, _set):
         # Forces order of elements in set to ensure consistent hash.
         self._type = type(_set)
@@ -74,8 +75,8 @@ class Hasher(Pickler):
         self.stream = io.BytesIO()
         # By default we want a pickle protocol that only changes with
         # the major python version and not the minor one
-        protocol = (pickle.DEFAULT_PROTOCOL if PY3_OR_LATER
-                    else pickle.HIGHEST_PROTOCOL)
+        protocol = (pickle.DEFAULT_PROTOCOL
+                    if PY3_OR_LATER else pickle.HIGHEST_PROTOCOL)
         Pickler.__init__(self, self.stream, protocol=protocol)
         # Initialise the hash obj
         self._hash = hashlib.new(hash_name)
@@ -159,8 +160,8 @@ class Hasher(Pickler):
         except TypeError:
             # If keys are unorderable, sorting them using their hash. This is
             # slower but works in any case.
-            Pickler._batch_setitems(self, iter(sorted((hash(k), v)
-                                                      for k, v in items)))
+            Pickler._batch_setitems(
+                self, iter(sorted((hash(k), v) for k, v in items)))
 
     def save_set(self, set_items):
         # forces order of items in Set to ensure consistent hash
@@ -185,7 +186,7 @@ class NumpyHasher(Hasher):
                 objects.
         """
         self.coerce_mmap = coerce_mmap
-        self.chunk_size = 200 * 1024 * 1024 # 200 Mb
+        self.chunk_size = 200 * 1024 * 1024  # 200 Mb
         Hasher.__init__(self, hash_name=hash_name)
         # delayed import of numpy, to avoid tight coupling
         import numpy as np
@@ -210,7 +211,8 @@ class NumpyHasher(Hasher):
                     copy = obj[:]
                     copy.shape = (copy.size,)
                 except AttributeError as e:
-                    if e.args[0] != 'incompatible shape for a non-contiguous array':
+                    if e.args[
+                            0] != 'incompatible shape for a non-contiguous array':
                         raise e
 
                     # TODO: I am punting here for now and do a reshape that will make
@@ -218,7 +220,8 @@ class NumpyHasher(Hasher):
                     # without needing one
                     copy = obj.reshape((obj.size,))
 
-                i = 0; size = copy.size
+                i = 0
+                size = copy.size
                 typed_chunk_size = self.chunk_size // copy.dtype.itemsize
                 while i < size:
                     end = min(i + typed_chunk_size, size)

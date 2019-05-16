@@ -21,7 +21,6 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../../'))
 
-
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -33,18 +32,15 @@ sys.path.insert(0, os.path.abspath('../../'))
 # ones.
 
 extensions = [
-    'nbsphinx',
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.doctest',
-    'sphinx.ext.coverage',
-    'sphinx.ext.viewcode',
-    'numpydoc']
+    'nbsphinx', 'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
+    'sphinx.ext.doctest', 'sphinx.ext.coverage', 'sphinx.ext.viewcode',
+    'numpydoc'
+]
 
 numpydoc_show_class_members = False
 
 exclude_patterns = ['_build', '**.ipynb_checkpoints']
- 
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -87,13 +83,11 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
-
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-
 
 # Taken from docs.readthedocs.io:
 # on_rtd is whether we are on readthedocs.io
@@ -115,12 +109,10 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'provenancedoc'
-
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -146,20 +138,16 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'provenance.tex', 'provenance Documentation',
-     'Ben Mabey', 'manual'),
+    (master_doc, 'provenance.tex', 'provenance Documentation', 'Ben Mabey',
+     'manual'),
 ]
-
 
 # -- Options for manual page output ---------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'provenance', 'provenance Documentation',
-     [author], 1)
-]
-
+man_pages = [(master_doc, 'provenance', 'provenance Documentation', [author], 1)
+            ]
 
 # -- Options for Texinfo output -------------------------------------------
 
@@ -167,8 +155,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'provenance', 'provenance Documentation',
-     author, 'provenance', 'Provenance and caching library for functions, built for creating lightweight machine learning pipelines.',
+    (master_doc, 'provenance', 'provenance Documentation', author, 'provenance',
+     'Provenance and caching library for functions, built for creating lightweight machine learning pipelines.',
      'Miscellaneous'),
 ]
 
@@ -176,6 +164,3 @@ extlinks = {
     'issue': ('https://github.com/bmabey/provenance/issues/%s', 'GH#'),
     'pr': ('https://github.com/bmabey/provenance/pull/%s', 'GH#')
 }
-
-
-

@@ -8,11 +8,11 @@ from memoized_property import memoized_property
 
 from . import blobstores as bs
 
-
 # TODO: catch and retry w/new client on
 # BrokenPipeError: [Errno 32] Broken pipe
 # ConnectionResetError: [Errno 54] Connection reset by peer
 # more?
+
 
 def retry(f, max_attempts=2):
 
@@ -23,19 +23,28 @@ def retry(f, max_attempts=2):
             try:
                 return f(store, *args, **kargs)
             except (BrokenPipeError, ConnectionError) as e:
-                actual_attempts +=1
+                actual_attempts += 1
                 if actual_attempts >= max_attempts:
                     raise e
                 else:
                     store._setup_client()
+
     return with_retry
 
 
-
 class GSStore(bs.RemoteStore):
-    def __init__(self, cachedir, bucket, basepath='', project=None,
-                 read=True, write=True, read_through_write=True,
-                 delete=False, on_duplicate_key='skip', cleanup_cachedir=False,
+
+    def __init__(self,
+                 cachedir,
+                 bucket,
+                 basepath='',
+                 project=None,
+                 read=True,
+                 write=True,
+                 read_through_write=True,
+                 delete=False,
+                 on_duplicate_key='skip',
+                 cleanup_cachedir=False,
                  always_check_remote=False):
         """
         Parameters
@@ -49,11 +58,14 @@ class GSStore(bs.RemoteStore):
         chaining the two doesn't really make sense though.
         """
         super(GSStore, self).__init__(always_check_remote=always_check_remote,
-                                      cachedir = cachedir,
-                                      basepath = basepath,
-                                      cleanup_cachedir = cleanup_cachedir,
-                                      read=read, write=write, read_through_write=read_through_write,
-                                      delete=delete, on_duplicate_key=on_duplicate_key)
+                                      cachedir=cachedir,
+                                      basepath=basepath,
+                                      cleanup_cachedir=cleanup_cachedir,
+                                      read=read,
+                                      write=write,
+                                      read_through_write=read_through_write,
+                                      delete=delete,
+                                      on_duplicate_key=on_duplicate_key)
 
         self.bucket_name = bucket
         self.project = project

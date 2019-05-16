@@ -10,7 +10,8 @@ from memoized_property import memoized_property
 Base = sa.ext.declarative.declarative_base()
 
 SHA1_LENGTH = 40
-VALUE_ID_LENGTH = SHA1_LENGTH + 10 # extra 10 for optional file extension info
+VALUE_ID_LENGTH = SHA1_LENGTH + 10  # extra 10 for optional file extension info
+
 
 class Run(Base):
     __tablename__ = 'runs'
@@ -32,6 +33,7 @@ class Run(Base):
         result = copy.copy(self.info)
         result['created_at'] = self.created_at
         return result
+
 
 class Artifact(Base):
     __tablename__ = 'artifacts'
@@ -84,22 +86,24 @@ class Artifact(Base):
 
     @memoized_property
     def props(self):
-        return {'id': self.id,
-                'value_id': self.value_id,
-                'name': self.name,
-                'version': self.version,
-                'fn_module': self.fn_module,
-                'fn_name': self.fn_name,
-                'composite': self.composite,
-                'value_id_duration': self.value_id_duration,
-                'compute_duration': self.compute_duration,
-                'hash_duration': self.hash_duration,
-                'input_artifact_ids': self.input_artifact_ids,
-                'serializer': self.serializer,
-                'load_kwargs': self.load_kwargs,
-                'dump_kwargs': self.dump_kwargs,
-                'custom_fields': self.custom_fields,
-                'computed_at': self.computed_at}
+        return {
+            'id': self.id,
+            'value_id': self.value_id,
+            'name': self.name,
+            'version': self.version,
+            'fn_module': self.fn_module,
+            'fn_name': self.fn_name,
+            'composite': self.composite,
+            'value_id_duration': self.value_id_duration,
+            'compute_duration': self.compute_duration,
+            'hash_duration': self.hash_duration,
+            'input_artifact_ids': self.input_artifact_ids,
+            'serializer': self.serializer,
+            'load_kwargs': self.load_kwargs,
+            'dump_kwargs': self.dump_kwargs,
+            'custom_fields': self.custom_fields,
+            'computed_at': self.computed_at
+        }
 
     def __repr__(self):
         return '<Artifact %r>' % self.id
@@ -113,7 +117,6 @@ class ArtifactSet(Base):
     labels = sa.Column(pg.JSONB)
     created_at = sa.Column(pg.TIMESTAMP, default=datetime.utcnow)
 
-
     def __init__(self, artifact_set):
         self.set_id = artifact_set.id
         labels = artifact_set.labels
@@ -124,9 +127,11 @@ class ArtifactSet(Base):
 
     @memoized_property
     def props(self):
-        return {'id': self.set_id,
-                'labels': self.labels,
-                'created_at': self.created_at}
+        return {
+            'id': self.set_id,
+            'labels': self.labels,
+            'created_at': self.created_at
+        }
 
     def __repr__(self):
         return '<ArtifactSet %r, %r>' % (self.set_id, self.labels)
@@ -135,7 +140,9 @@ class ArtifactSet(Base):
 class ArtifactSetMember(Base):
     __tablename__ = 'artifact_set_members'
 
-    set_id = sa.Column(pg.VARCHAR(SHA1_LENGTH), #sa.ForeignKey("artifact_sets.set_id"),
-                       primary_key=True)
-    artifact_id = sa.Column(pg.VARCHAR(SHA1_LENGTH), #sa.ForeignKey("artifacts.id"),
-                            primary_key=True)
+    set_id = sa.Column(
+        pg.VARCHAR(SHA1_LENGTH),  #sa.ForeignKey("artifact_sets.set_id"),
+        primary_key=True)
+    artifact_id = sa.Column(
+        pg.VARCHAR(SHA1_LENGTH),  #sa.ForeignKey("artifacts.id"),
+        primary_key=True)

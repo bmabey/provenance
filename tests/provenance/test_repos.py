@@ -60,13 +60,17 @@ def test_inputs_json(db_session):
         }
     }
 
-    results = pipeline(filename='foo-bar', process_x_inc=5, process_y_inc=10,
+    results = pipeline(filename='foo-bar',
+                       process_x_inc=5,
+                       process_y_inc=10,
                        timestamp=now)
     res = results['res'].artifact
     inputs_json = r._inputs_json(res.inputs)
     assert inputs_json == expected_inputs_json
 
-    results = pipeline(filename='foo-bar', process_x_inc=5, process_y_inc=10,
+    results = pipeline(filename='foo-bar',
+                       process_x_inc=5,
+                       process_y_inc=10,
                        timestamp=now)
     res = results['res'].artifact
     inputs_json = r._inputs_json(res.inputs)
@@ -196,7 +200,9 @@ def test_permissions(atomic_repo):
 
 def test_chained_with_readonly():
     read_repo = r.MemoryRepo([artifact_record(id='foo')],
-                             read=True, write=False, delete=False)
+                             read=True,
+                             write=False,
+                             delete=False)
     write_repo = r.MemoryRepo(read=True, write=True, delete=False)
     repos = [read_repo, write_repo]
     chained = r.ChainedRepo(repos)
@@ -219,12 +225,16 @@ def test_chained_read_through_write():
     foo = artifact_record(id='foo')
     read_repo = r.MemoryRepo([foo], read=True, write=False)
     repo_ahead = r.MemoryRepo(read=True, write=True, read_through_write=True)
-    read_through_write_repo = r.MemoryRepo(read=True, write=True,
+    read_through_write_repo = r.MemoryRepo(read=True,
+                                           write=True,
                                            read_through_write=True)
-    no_read_through_write_repo = r.MemoryRepo(read=True, write=True,
+    no_read_through_write_repo = r.MemoryRepo(read=True,
+                                              write=True,
                                               read_through_write=False)
-    repos = [no_read_through_write_repo, read_through_write_repo, read_repo,
-             repo_ahead]
+    repos = [
+        no_read_through_write_repo, read_through_write_repo, read_repo,
+        repo_ahead
+    ]
     chained_repo = r.ChainedRepo(repos)
 
     assert 'foo' not in read_through_write_repo
@@ -241,7 +251,8 @@ def test_chained_read_through_write():
 def test_chained_writes_may_be_allowed_on_read_throughs_only():
     foo = artifact_record(id='foo')
     read_repo = r.MemoryRepo([foo], read=True, write=False)
-    read_through_write_only_repo = r.MemoryRepo(read=True, write=False,
+    read_through_write_only_repo = r.MemoryRepo(read=True,
+                                                write=False,
                                                 read_through_write=True)
     write_repo = r.MemoryRepo(read=True, write=True, read_through_write=False)
     repos = [write_repo, read_through_write_only_repo, read_repo]
@@ -265,8 +276,11 @@ def test_db_is_automatically_created_and_migrated(disk_store):
     if sql_utils.database_exists(db_conn_str):
         sql_utils.drop_database(db_conn_str)
 
-    repo = r.PostgresRepo(db_conn_str, disk_store,
-                          read=True, write=True, delete=True,
+    repo = r.PostgresRepo(db_conn_str,
+                          disk_store,
+                          read=True,
+                          write=True,
+                          delete=True,
                           create_db=True)
     p.set_default_repo(repo)
 
@@ -283,14 +297,19 @@ def test_db_is_automatically_created_and_migrated(disk_store):
     sql_utils.drop_database(db_conn_str)
 
 
-def test_db_is_automatically_created_and_migrated_with_the_right_schema(disk_store):
+def test_db_is_automatically_created_and_migrated_with_the_right_schema(
+        disk_store):
     db_conn_str = 'postgresql://localhost/test_provenance_autocreate_schema'
     if sql_utils.database_exists(db_conn_str):
         sql_utils.drop_database(db_conn_str)
 
-    repo = r.PostgresRepo(db_conn_str, disk_store,
-                          read=True, write=True, delete=True,
-                          create_db=True, schema='foobar')
+    repo = r.PostgresRepo(db_conn_str,
+                          disk_store,
+                          read=True,
+                          write=True,
+                          delete=True,
+                          create_db=True,
+                          schema='foobar')
     p.set_default_repo(repo)
 
     @p.provenance()
@@ -302,9 +321,13 @@ def test_db_is_automatically_created_and_migrated_with_the_right_schema(disk_sto
     with repo.session() as s:
         res = pd.read_sql("select * from foobar.artifacts", s.connection())
 
-    repo2 = r.PostgresRepo(db_conn_str, disk_store,
-                           read=True, write=True, delete=True,
-                           create_db=True, schema='baz')
+    repo2 = r.PostgresRepo(db_conn_str,
+                           disk_store,
+                           read=True,
+                           write=True,
+                           delete=True,
+                           create_db=True,
+                           schema='baz')
 
     p.set_default_repo(repo2)
 
@@ -326,9 +349,13 @@ def xtest_db_is_automatically_migrated(disk_store):
 
     sql_utils.create_database(db_conn_str)
 
-    repo = r.PostgresRepo(db_conn_str, disk_store,
-                          read=True, write=True, delete=True,
-                          create_db=False, upgrade_db=True)
+    repo = r.PostgresRepo(db_conn_str,
+                          disk_store,
+                          read=True,
+                          write=True,
+                          delete=True,
+                          create_db=False,
+                          upgrade_db=True)
     p.set_default_repo(repo)
 
     @p.provenance()
@@ -343,7 +370,9 @@ def xtest_db_is_automatically_migrated(disk_store):
 
 
 def test_artifact_proxy_works_with_iterables():
+
     class Foo(object):
+
         def __init__(self, a):
             self.a = a
 
