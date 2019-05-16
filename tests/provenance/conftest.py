@@ -15,28 +15,29 @@ import provenance.blobstores as bs
 import provenance.repos as r
 
 
-
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def s3fs():
     import moto
+
     m = moto.mock_s3()
     m.start()
     import s3fs
     import boto3
-    client = boto3.client('s3')
-    client.create_bucket(Bucket='bucket')
+
+    client = boto3.client("s3")
+    client.create_bucket(Bucket="bucket")
     fs = s3fs.S3FileSystem(anon=False)
     return fs
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def db_conn_str():
-    env_conn_str = os.environ.get('DB', None)
-    return env_conn_str or 'postgresql://localhost/test_provenance'
+    env_conn_str = os.environ.get("DB", None)
+    return env_conn_str or "postgresql://localhost/test_provenance"
 
 
 ### This should be the SQLAlchemy db_conn
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def db_engine(db_conn_str):
     if sql_utils.database_exists(db_conn_str):
         sql_utils.drop_database(db_conn_str)
@@ -79,27 +80,30 @@ def cd(newdir, cleanup=lambda: True):
         os.chdir(prevdir)
         cleanup()
 
+
 @contextlib.contextmanager
 def tempdir():
     dirpath = tempfile.mkdtemp()
+
     def cleanup():
         shutil.rmtree(dirpath)
+
     with cd(dirpath, cleanup):
         yield dirpath
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def disk_store():
     with tempdir() as dirname:
         yield bs.DiskStore(cachedir=dirname, delete=True)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def memory_store():
     return bs.MemoryStore()
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def memory_repo():
     repo = r.MemoryRepo(read=True, write=True, delete=True)
     p.set_default_repo(repo)
@@ -107,9 +111,9 @@ def memory_repo():
     p.set_default_repo(None)
 
 
-@pytest.fixture(scope='function', params=['memory_store', 'disk_store'])
+@pytest.fixture(scope="function", params=["memory_store", "disk_store"])
 def blobstore(request, memory_store, disk_store):
-    if request.param == 'memory_store':
+    if request.param == "memory_store":
         store = memory_store
     else:
         store = disk_store
@@ -118,11 +122,19 @@ def blobstore(request, memory_store, disk_store):
 
 # there must be a better way, but this is so I can get get two db_session fixtures
 db_session_ = db_session
-@pytest.fixture(scope='function',
-               # params=['memoryrepo'])
-                params=['memoryrepo', 'dbrepo-diskstore', 'dbrepo-memorystore', 'chained-memmem',
-                     #   'chained-repo'
-                ])
+
+
+@pytest.fixture(
+    scope="function",
+    # params=['memoryrepo'])
+    params=[
+        "memoryrepo",
+        "dbrepo-diskstore",
+        "dbrepo-memorystore",
+        "chained-memmem",
+        #   'chained-repo'
+    ],
+)
 def repo(request, db_session):
     # clean old config settings
     r.Config.set_current(r.Config({}, {}, None))
@@ -130,73 +142,90 @@ def repo(request, db_session):
     disk_store_gen2 = None
     repo2 = None
     prevdir = os.getcwd()
-    if request.param == 'memoryrepo':
+    if request.param == "memoryrepo":
         repo = r.MemoryRepo(read=True, write=True, delete=True)
-    elif request.param == 'dbrepo-diskstore':
+    elif request.param == "dbrepo-diskstore":
         disk_store_gen = disk_store()
-        repo = r.DbRepo(db_session, next(disk_store_gen),
-                        read=True, write=True, delete=True)
-    elif request.param == 'chained-memmem':
-        repo = r.ChainedRepo([r.MemoryRepo(read=True, write=True, delete=True),
-                              r.MemoryRepo(read=True, write=True, delete=True)])
-    elif request.param == 'chained-repo':
+        repo = r.DbRepo(
+            db_session, next(disk_store_gen), read=True, write=True, delete=True
+        )
+    elif request.param == "chained-memmem":
+        repo = r.ChainedRepo(
+            [
+                r.MemoryRepo(read=True, write=True, delete=True),
+                r.MemoryRepo(read=True, write=True, delete=True),
+            ]
+        )
+    elif request.param == "chained-repo":
         disk_store_gen = disk_store()
         disk_store_gen2 = disk_store()
-        repo1 = r.DbRepo(db_session, next(disk_store_gen),
-                        read=True, write=True, delete=True)
+        repo1 = r.DbRepo(
+            db_session, next(disk_store_gen), read=True, write=True, delete=True
+        )
         os.chdir(prevdir)
-        repo2 = r.DbRepo('postgresql://localhost/test_provenance', next(disk_store_gen2),
-                         read=True, write=True, delete=True,
-                         schema='second_repo')
+        repo2 = r.DbRepo(
+            "postgresql://localhost/test_provenance",
+            next(disk_store_gen2),
+            read=True,
+            write=True,
+            delete=True,
+            schema="second_repo",
+        )
         repo = r.ChainedRepo([repo1, repo2])
     else:
-        repo = r.DbRepo(db_session,
-                        memory_store(),
-                        read=True, write=True, delete=True)
+        repo = r.DbRepo(db_session, memory_store(), read=True, write=True, delete=True)
 
     p.set_default_repo(repo)
     yield repo
     p.set_default_repo(None)
     if repo2 is not None:
-        repo2._db_engine.execute('drop schema second_repo cascade;')
+        repo2._db_engine.execute("drop schema second_repo cascade;")
 
     if disk_store_gen:
-        next(disk_store_gen, 'ignore')
+        next(disk_store_gen, "ignore")
     if disk_store_gen2:
-        next(disk_store_gen2, 'ignore')
+        next(disk_store_gen2, "ignore")
 
 
-@pytest.fixture(scope='function', params=['dbrepo-diskstore'])
+@pytest.fixture(scope="function", params=["dbrepo-diskstore"])
 def dbdiskrepo(request, db_session):
     repo_gen = repo(request, db_session)
     yield next(repo_gen)
-    next(repo_gen, 'ignore')
+    next(repo_gen, "ignore")
 
 
 another_dbdiskrepo = dbdiskrepo
 
 
-@pytest.fixture(scope='function',
-                params=['memoryrepo' 'dbrepo-diskstore', 'dbrepo-memorystore'])
+@pytest.fixture(
+    scope="function", params=["memoryrepo" "dbrepo-diskstore", "dbrepo-memorystore"]
+)
 def atomic_repo(request, db_session):
     repo_gen = repo(request, db_session)
     yield next(repo_gen)
-    next(repo_gen, 'ignore')
+    next(repo_gen, "ignore")
 
 
-md5 = st.text('0123456789abcdef', min_size=32, max_size=32)
-_artifact_record_st = st.fixed_dictionaries({'id': md5, 'value_id': md5})
+md5 = st.text("0123456789abcdef", min_size=32, max_size=32)
+_artifact_record_st = st.fixed_dictionaries({"id": md5, "value_id": md5})
+
 
 def artifact_record(**kargs):
-    artifact_props = t.merge({k: None for k in  pc.artifact_properties},
-                             _artifact_record_st.example(),
-                             {'inputs': {'varargs':[1,2,3], 'kargs': {}},
-                              'fn_module': 'foo', 'fn_name': 'bar',
-                              'value': 55, 'name': 'bar',
-                              'version': 0,
-                              'serializer': 'joblib',
-                              'run_info': pc.run_info()},
-                             kargs)
+    artifact_props = t.merge(
+        {k: None for k in pc.artifact_properties},
+        _artifact_record_st.example(),
+        {
+            "inputs": {"varargs": [1, 2, 3], "kargs": {}},
+            "fn_module": "foo",
+            "fn_name": "bar",
+            "value": 55,
+            "name": "bar",
+            "version": 0,
+            "serializer": "joblib",
+            "run_info": pc.run_info(),
+        },
+        kargs,
+    )
     return pc.ArtifactRecord(**artifact_props)
 
 

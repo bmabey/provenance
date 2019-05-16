@@ -11,7 +11,7 @@ if PY3:
 else:
     getargspec = inspect.getargspec
 
-if hasattr(builtins, 'basestring'):
+if hasattr(builtins, "basestring"):
     string_type = basestring
 else:
     string_type = str

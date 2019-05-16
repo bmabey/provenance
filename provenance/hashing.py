@@ -27,7 +27,6 @@ import decimal
 from joblib._compat import _bytes_or_unicode, PY3_OR_LATER
 
 
-
 @singledispatch
 def value_repr(obj):
     method = getattr(obj, "value_repr", None)
@@ -39,10 +38,12 @@ def value_repr(obj):
 
 Pickler = cloudpickle.CloudPickler
 
+
 class _ConsistentSet(object):
     """ Class used to ensure the hash of Sets is preserved
         whatever the order of its items.
     """
+
     def __init__(self, _set):
         # Forces order of elements in set to ensure consistent hash.
         self._type = type(_set)
@@ -70,12 +71,11 @@ class Hasher(Pickler):
         pickling.
     """
 
-    def __init__(self, hash_name='md5'):
+    def __init__(self, hash_name="md5"):
         self.stream = io.BytesIO()
         # By default we want a pickle protocol that only changes with
         # the major python version and not the minor one
-        protocol = (pickle.DEFAULT_PROTOCOL if PY3_OR_LATER
-                    else pickle.HIGHEST_PROTOCOL)
+        protocol = pickle.DEFAULT_PROTOCOL if PY3_OR_LATER else pickle.HIGHEST_PROTOCOL
         Pickler.__init__(self, self.stream, protocol=protocol)
         # Initialise the hash obj
         self._hash = hashlib.new(hash_name)
@@ -84,7 +84,7 @@ class Hasher(Pickler):
         try:
             self.dump(obj)
         except pickle.PicklingError as e:
-            e.args += ('PicklingError while hashing %r: %r' % (obj, e),)
+            e.args += ("PicklingError while hashing %r: %r" % (obj, e),)
             raise
         dumps = self.stream.getvalue()
         self._hash.update(dumps)
@@ -95,7 +95,7 @@ class Hasher(Pickler):
         if isinstance(obj, (types.MethodType, type({}.pop))):
             # the Pickler cannot pickle instance methods; here we decompose
             # them into components that make them uniquely identifiable
-            if hasattr(obj, '__func__'):
+            if hasattr(obj, "__func__"):
                 func_name = obj.__func__.__name__
             else:
                 func_name = obj.__name__
@@ -122,13 +122,13 @@ class Hasher(Pickler):
         # __main__
         kwargs = dict(name=name, pack=pack)
         if sys.version_info >= (3, 4):
-            del kwargs['pack']
+            del kwargs["pack"]
         try:
             Pickler.save_global(self, obj, **kwargs)
         except pickle.PicklingError:
             Pickler.save_global(self, obj, **kwargs)
             module = getattr(obj, "__module__", None)
-            if module == '__main__':
+            if module == "__main__":
                 my_name = name
                 if my_name is None:
                     my_name = obj.__name__
@@ -159,8 +159,7 @@ class Hasher(Pickler):
         except TypeError:
             # If keys are unorderable, sorting them using their hash. This is
             # slower but works in any case.
-            Pickler._batch_setitems(self, iter(sorted((hash(k), v)
-                                                      for k, v in items)))
+            Pickler._batch_setitems(self, iter(sorted((hash(k), v) for k, v in items)))
 
     def save_set(self, set_items):
         # forces order of items in Set to ensure consistent hash
@@ -174,7 +173,7 @@ class NumpyHasher(Hasher):
     """ Special case the hasher for when numpy is loaded.
     """
 
-    def __init__(self, hash_name='md5', coerce_mmap=True):
+    def __init__(self, hash_name="md5", coerce_mmap=True):
         """
             Parameters
             ----------
@@ -185,10 +184,11 @@ class NumpyHasher(Hasher):
                 objects.
         """
         self.coerce_mmap = coerce_mmap
-        self.chunk_size = 200 * 1024 * 1024 # 200 Mb
+        self.chunk_size = 200 * 1024 * 1024  # 200 Mb
         Hasher.__init__(self, hash_name=hash_name)
         # delayed import of numpy, to avoid tight coupling
         import numpy as np
+
         self.np = np
 
     def hash_array(self, a):
@@ -210,7 +210,7 @@ class NumpyHasher(Hasher):
                     copy = obj[:]
                     copy.shape = (copy.size,)
                 except AttributeError as e:
-                    if e.args[0] != 'incompatible shape for a non-contiguous array':
+                    if e.args[0] != "incompatible shape for a non-contiguous array":
                         raise e
 
                     # TODO: I am punting here for now and do a reshape that will make
@@ -218,7 +218,8 @@ class NumpyHasher(Hasher):
                     # without needing one
                     copy = obj.reshape((obj.size,))
 
-                i = 0; size = copy.size
+                i = 0
+                size = copy.size
                 typed_chunk_size = self.chunk_size // copy.dtype.itemsize
                 while i < size:
                     end = min(i + typed_chunk_size, size)
@@ -243,7 +244,7 @@ class NumpyHasher(Hasher):
             # different views on the same data with different dtypes.
 
             # The object will be pickled by the pickler hashed at the end.
-            obj = (klass, ('HASHED', obj.dtype, obj.shape))
+            obj = (klass, ("HASHED", obj.dtype, obj.shape))
         elif isinstance(obj, self.np.dtype):
             # Atomic dtype objects are interned by their default constructor:
             # np.dtype('f8') is np.dtype('f8')
@@ -257,11 +258,11 @@ class NumpyHasher(Hasher):
             # .descr which is a full (and never interned) description of
             # the array dtype according to the numpy doc.
             klass = obj.__class__
-            obj = (klass, ('HASHED', obj.descr))
+            obj = (klass, ("HASHED", obj.descr))
         Hasher.save(self, obj)
 
 
-def hash(obj, hasher=None, hash_name='md5', coerce_mmap=True):
+def hash(obj, hasher=None, hash_name="md5", coerce_mmap=True):
     """ Quick calculation of a hash to identify uniquely Python objects
         containing numpy arrays. The difference with this hash and joblib
         is that it tries to hash different mutable objects with the same
@@ -277,7 +278,7 @@ def hash(obj, hasher=None, hash_name='md5', coerce_mmap=True):
             Make no difference between np.memmap and np.ndarray
     """
     if hasher is None:
-        if 'numpy' in sys.modules:
+        if "numpy" in sys.modules:
             hasher = NumpyHasher(hash_name=hash_name, coerce_mmap=coerce_mmap)
         else:
             hasher = Hasher(hash_name=hash_name)
@@ -285,14 +286,14 @@ def hash(obj, hasher=None, hash_name='md5', coerce_mmap=True):
     return hasher.hash(obj)
 
 
-def file_hash(filename, hash_name='md5'):
+def file_hash(filename, hash_name="md5"):
     """Streams the bytes of the given file through either md5 or sha1
        and returns the hexdigest.
     """
-    if hash_name not in set(['md5', 'sha1']):
+    if hash_name not in set(["md5", "sha1"]):
         raise ValueError('hashname must be "md5" or "sha1"')
 
-    hasher = hashlib.md5() if hash_name == 'md5' else hashlib.sha1()
+    hasher = hashlib.md5() if hash_name == "md5" else hashlib.sha1()
     with open(filename, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
             hasher.update(chunk)
