@@ -318,7 +318,13 @@ class ArtifactProxy(wrapt.ObjectProxy, Proxy):
             format(self.artifact.id, repr(self.__wrapped__))
 
     def __reduce__(self):
-        return (load_proxy , (self.artifact.id,))
+        return (load_proxy, (self.artifact.id,))
+
+    def __reduce_ex__(self, protocol_version):
+        return self.__reduce__()
+
+    def __copy__(self):
+        return ArtifactProxy(self.__wrapped__, self._self_artifact)
 
 
 class CallableArtifactProxy(wrapt.CallableObjectProxy, Proxy):
@@ -336,6 +342,12 @@ class CallableArtifactProxy(wrapt.CallableObjectProxy, Proxy):
 
     def __reduce__(self):
         return (load_proxy, (self.artifact.id,))
+
+    def __reduce_ex__(self, protocol_version):
+        return self.__reduce__()
+
+    def __copy__(self):
+        return CallableArtifactProxy(self.__wrapped__, self._self_artifact)
 
 
 def artifact_proxy(value, artifact):
