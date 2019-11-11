@@ -287,7 +287,7 @@ def provenance_wrapper(repo, f):
                 msg = 'The default repo is not set. '
                 msg += 'You may want to add  the `default_repo` key to your call to `provenance.load_config.` '
                 msg += 'e.g., provenance\.load_config({\'default_repo\': <default repo name>, ...})'
-                raise Exception(msg).with_traceback(e.__traceback__)
+                raise AttributeError(msg).with_traceback(e.__traceback__)
         else:
             artifact = None
 

@@ -19,6 +19,19 @@ def spit(filename, content):
     with open(filename, "w") as f:
         f.write(content)
 
+
+def test_errors_without_default_repo():
+    @p.provenance()
+    def my_add(x, y):
+        print("Executed")
+        return x + y
+
+    with pytest.raises(AttributeError) as err:
+        my_add(1, 4)
+        
+        assert 'The default repo is not set' in err.message
+    
+
 def test_integration_test(repo):
     @p.provenance(version=0, name='initial_data')
     def load_data(filename):
