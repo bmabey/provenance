@@ -375,7 +375,7 @@ class Artifact(object):
         self.__dict__ = props.copy()
         self.repo = repo
 
-        if value != 'not provided':
+        if not isinstance(value, str) or value != 'not provided':
             self._value = value
         if inputs is not None:
             self._inputs = inputs
@@ -714,7 +714,7 @@ class PostgresRepo(ArtifactRepository):
 
         if create_schema and schema is not None:
             with self.session() as session:
-                q = sa.exists(sa.select([("schema_name")]).select_from(sa.text("information_schema.schemata"))
+                q = sa.exists(sa.select([sa.text("schema_name")]).select_from(sa.text("information_schema.schemata"))
                               .where(sa.text("schema_name = :schema")
                                      .bindparams(schema=schema)))
                 if not session.query(q).scalar():
