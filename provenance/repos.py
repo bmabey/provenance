@@ -324,7 +324,10 @@ class ArtifactProxy(wrapt.ObjectProxy, Proxy):
         return self.__reduce__()
 
     def __copy__(self):
-        return ArtifactProxy(self.__wrapped__, self._self_artifact)
+        return ArtifactProxy(copy.copy(self.__wrapped__), self._self_artifact)
+
+    def __deepcopy__(self):
+        return ArtifactProxy(copy.deepcopy(self.__wrapped__), self._self_artifact)
 
 
 class CallableArtifactProxy(wrapt.CallableObjectProxy, Proxy):
@@ -347,8 +350,10 @@ class CallableArtifactProxy(wrapt.CallableObjectProxy, Proxy):
         return self.__reduce__()
 
     def __copy__(self):
-        return CallableArtifactProxy(self.__wrapped__, self._self_artifact)
+        return CallableArtifactProxy(copy.copy(self.__wrapped__), self._self_artifact)
 
+    def __deepcopy__(self):
+        return CallableArtifactProxy(copy.deepcopy(self.__wrapped__), self._self_artifact)
 
 def artifact_proxy(value, artifact):
     if callable(value):
