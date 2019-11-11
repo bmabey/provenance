@@ -1,6 +1,6 @@
 language: python
 sudo: required
-dist: precise
+dist: xenial
 addons:
   postgresql: "9.5"
 services:
