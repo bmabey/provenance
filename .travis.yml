@@ -10,9 +10,6 @@ before_script:
 env:
   global:
     - DB=postgresql://postgres@localhost/test_provenance
-    # do not load /etc/boto.cfg with Python 3 incompatible plugin
-    # https://github.com/travis-ci/travis-ci/issues/5246#issuecomment-166460882
-    - BOTO_CONFIG=/doesnotexist
 
 python:
   # We don't actually use the Travis Python, but this keeps it organized. For now only python 3.5 is supported.
@@ -23,9 +20,9 @@ python:
 
 install:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
+    wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
     else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
     fi
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
