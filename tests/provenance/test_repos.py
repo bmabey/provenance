@@ -1,4 +1,5 @@
 from datetime import datetime
+import copy
 
 import pandas as pd
 import pytest
@@ -103,6 +104,20 @@ def test_basic_repo_ops(repo):
 
     with pytest.raises(KeyError) as e:
         repo.get_by_value_id(artifact.id)
+
+
+@pytest.mark.parametrize('artifact_class', [r.ArtifactProxy, r.CallableArtifactProxy])
+@pytest.mark.parametrize('copy_method', [copy.copy, copy.deepcopy])
+def test_copy_Proxies(repo, artifact_class, copy_method):
+    class Artifact():
+        def __init__(self, id):
+            self.id = id
+
+    a = artifact_class({'a': 1, 'b': 2, 'c': 3}, Artifact('1'))
+    b = copy_method(a)
+    b['a'] = 10
+
+    assert a['a'] != b['a']
 
 
 def test_repo_set_put_and_finding(repo):
