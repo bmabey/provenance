@@ -40,7 +40,7 @@ install:
   # to explicitly install a specific version of dateutil. Note, this is not
   # being added to the requirements file as this does not affect local builds,
   # only the travis environment which is using boto.
-  - pip install dateutil==2.8.0
+  - pip install python-dateutil==2.8.0
   - python setup.py install
 
 script: python setup.py test
