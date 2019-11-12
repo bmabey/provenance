@@ -355,6 +355,7 @@ class CallableArtifactProxy(wrapt.CallableObjectProxy, Proxy):
     def __deepcopy__(self, memo=None):
         return CallableArtifactProxy(copy.deepcopy(self.__wrapped__, memo), self._self_artifact)
 
+
 def artifact_proxy(value, artifact):
     if callable(value):
         return CallableArtifactProxy(value, artifact)
