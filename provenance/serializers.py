@@ -105,6 +105,27 @@ if _pandas_and_parquet_present():
                         classes=[pd.Series])
 
 
+def _pytorch_present():
+    try:
+        import torch  # noqa F401
+    except:
+        return False
+    return True
+
+
+if _pytorch_present():
+    import torch
+
+    def pytorch_model_dump(model, filename, **kwargs):
+        return torch.save(model, filename)
+
+    def pytorch_model_load(filename, **kwargs):
+        return torch.load(filename)
+
+    register_serializer('pytorch_model', pytorch_model_dump, pytorch_model_load,
+                        classes=[torch.nn.Module])
+
+
 @t.memoize(key=lambda *args: hash(args))
 def partial_serializer(serializer_name, dump_kwargs, load_kwargs):
     s = serializers[serializer_name]
