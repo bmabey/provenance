@@ -3,6 +3,14 @@
 History
 =======
 
+0.13.0 (2019-12-02)
+------------
+
+Thanks to Dan Maljovec, @dmaljovec, for these fixes and additions!
+
+* Updates ``wrapt`` dependency and makes Artifact proxies compatible.
+* Adds optional PyTorch model serialization.
+* Adds helpful error message when a user does not set a default repo.
 
 0.12.0 (2018-10-08)
 ------------
