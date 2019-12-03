@@ -5,4 +5,4 @@ pytest-pythonpath>=0.7.1
 hypothesis>=3.6.0
 h5py
 pandas
-pytorch
+torch
