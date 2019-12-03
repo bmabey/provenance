@@ -106,7 +106,7 @@ For everything all at once:
 
 
 Compatibility
-============
+=============
 
 ``provenance`` is currently only compatible with Python 3.5 and higher. Updating it to work with Python 2.7x
 should be easy, follow this `ticket`_ if you are interested in that.
