@@ -1,7 +1,6 @@
 import sys
 
-from . import hashing as h
-from . import repos as r
+from . import hashing as h, repos as r
 
 
 def _save(obj, artifacts):

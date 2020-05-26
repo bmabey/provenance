@@ -14,20 +14,21 @@ This code was originally taken from joblib and modified.
 # Copyright (c) 2009 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
-import cloudpickle
-from functools import singledispatch
-import pickle
+import decimal
 import hashlib
+import io
+import pickle
+import struct
 import sys
 import types
-import struct
-import io
-import decimal
+from functools import singledispatch
+
+import cloudpickle
 
 
 @singledispatch
 def value_repr(obj):
-    method = getattr(obj, "value_repr", None)
+    method = getattr(obj, 'value_repr', None)
     if callable(method):
         return method()
     else:
@@ -36,10 +37,12 @@ def value_repr(obj):
 
 Pickler = cloudpickle.CloudPickler
 
+
 class _ConsistentSet(object):
     """ Class used to ensure the hash of Sets is preserved
         whatever the order of its items.
     """
+
     def __init__(self, _set):
         # Forces order of elements in set to ensure consistent hash.
         self._type = type(_set)
@@ -123,7 +126,7 @@ class Hasher(Pickler):
             Pickler.save_global(self, obj, **kwargs)
         except pickle.PicklingError:
             Pickler.save_global(self, obj, **kwargs)
-            module = getattr(obj, "__module__", None)
+            module = getattr(obj, '__module__', None)
             if module == '__main__':
                 my_name = name
                 if my_name is None:
@@ -155,8 +158,7 @@ class Hasher(Pickler):
         except TypeError:
             # If keys are unorderable, sorting them using their hash. This is
             # slower but works in any case.
-            Pickler._batch_setitems(self, iter(sorted((hash(k), v)
-                                                      for k, v in items)))
+            Pickler._batch_setitems(self, iter(sorted((hash(k), v) for k, v in items)))
 
     def save_set(self, set_items):
         # forces order of items in Set to ensure consistent hash
@@ -181,10 +183,11 @@ class NumpyHasher(Hasher):
                 objects.
         """
         self.coerce_mmap = coerce_mmap
-        self.chunk_size = 200 * 1024 * 1024 # 200 Mb
+        self.chunk_size = 200 * 1024 * 1024  # 200 Mb
         Hasher.__init__(self, hash_name=hash_name)
         # delayed import of numpy, to avoid tight coupling
         import numpy as np
+
         self.np = np
 
     def hash_array(self, a):
@@ -214,7 +217,8 @@ class NumpyHasher(Hasher):
                     # without needing one
                     copy = obj.reshape((obj.size,))
 
-                i = 0; size = copy.size
+                i = 0
+                size = copy.size
                 typed_chunk_size = self.chunk_size // copy.dtype.itemsize
                 while i < size:
                     end = min(i + typed_chunk_size, size)
@@ -289,7 +293,7 @@ def file_hash(filename, hash_name='md5'):
         raise ValueError('hashname must be "md5" or "sha1"')
 
     hasher = hashlib.md5() if hash_name == 'md5' else hashlib.sha1()
-    with open(filename, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
+    with open(filename, 'rb') as f:
+        for chunk in iter(lambda: f.read(4096), b''):
             hasher.update(chunk)
     return hasher.hexdigest()

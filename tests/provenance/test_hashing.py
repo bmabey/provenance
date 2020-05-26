@@ -1,13 +1,14 @@
-from hypothesis import given
-import provenance as p
-from provenance.hashing import hash
-import provenance.hashing as h
-import provenance.artifact_hasher as ah
-import numpy as np
 import copy
-import hypothesis.strategies as st
 
+import hypothesis.strategies as st
+import numpy as np
+from hypothesis import given
 from strategies import data
+
+import provenance as p
+import provenance.artifact_hasher as ah
+from provenance.hashing import hash
+
 
 @given(data)
 def test_shallow_and_deep_copies_hashing(o):
@@ -28,41 +29,38 @@ def test_shared_values_hashing(base_data):
 
     assert hash(shared_dict) == hash(without_sharing_dict)
 
-
     shared_tuple = (base_data, base_data)
     without_sharing_tuple = (base_copy(), base_copy())
 
     assert hash(shared_tuple) == hash(without_sharing_tuple)
-
 
     shared_list = [base_data, base_data]
     without_sharing_list = [base_copy(), base_copy()]
 
     assert hash(shared_list) == hash(without_sharing_list)
 
+
 def test_hash_of_contiguous_array_is_the_same_as_noncontiguous():
-    a = np.asarray(np.arange(6000).reshape((1000, 2, 3)),
-                   order='F')[:, :1, :]
+    a = np.asarray(np.arange(6000).reshape((1000, 2, 3)), order='F')[:, :1, :]
     b = np.ascontiguousarray(a)
     assert hash(a) == hash(b)
 
+
 def test_hash_of_fortran_array_is_the_same_as_c_array():
-    c = np.asarray(np.arange(6000).reshape((1000, 2, 3)),
-                   order='C')
-    f = np.asarray(np.arange(6000).reshape((1000, 2, 3)),
-                   order='F')
+    c = np.asarray(np.arange(6000).reshape((1000, 2, 3)), order='C')
+    f = np.asarray(np.arange(6000).reshape((1000, 2, 3)), order='F')
 
     assert hash(c) == hash(f)
 
-def test_hashing_of_functions():
 
+def test_hashing_of_functions():
     def foo(a, b):
         return a + b
 
     assert hash(foo) == hash(foo)
 
-def test_hashing_of_artifacts_and_proxies(repo):
 
+def test_hashing_of_artifacts_and_proxies(repo):
     @p.provenance()
     def load_data():
         return [1, 2, 3]
@@ -87,8 +85,8 @@ def test_hashing_of_artifacts_and_proxies(repo):
     # Proxies and values should have the same hash
     assert hash(original_proxy) == hash(original_artifact.value)
 
-def test_hashing_with_artifact_hasher_also_returns_iter_of_artifacts_preserves_hash(repo):
 
+def test_hashing_with_artifact_hasher_also_returns_iter_of_artifacts_preserves_hash(repo):
     @p.provenance()
     def load_data():
         return [1, 2, 3]

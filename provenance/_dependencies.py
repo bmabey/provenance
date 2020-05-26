@@ -1,11 +1,9 @@
-import cloudpickle
 import io
-from ordered_set import OrderedSet
 import pickle
 
-from . import repos as r
-from .compatibility import string_type
+import cloudpickle
 
+from . import repos as r
 
 Pickler = cloudpickle.CloudPickler
 

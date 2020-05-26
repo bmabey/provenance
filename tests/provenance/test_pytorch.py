@@ -1,25 +1,12 @@
-from provenance.hashing import hash
-from conftest import artifact_record
-import provenance.utils as u
-import provenance.repos as r
-import provenance.core as pc
-import provenance as p
-import conftest as c
-
-import toolz as t
-import pandas as pd
-import numpy as np
-
-import cloudpickle as pickle
-import os
-import random
-import shutil
-import tempfile
 from copy import copy, deepcopy
 
 import pytest
-pytest.importorskip("torch")
-import torch
+
+import provenance as p
+from provenance.hashing import hash
+
+torch = pytest.importorskip('torch')
+
 
 class TwoLayerNet(torch.nn.Module):
     """
@@ -60,12 +47,7 @@ def random_data(N, D_in, D_out):
     # Create random Tensors to hold inputs and outputs
     x = torch.randn(N, D_in)
     y = torch.randn(N, D_out)
-    return {
-        'X_train': x,
-        'Y_train': y,
-        'X_test': x,
-        'Y_test': y
-    }
+    return {'X_train': x, 'Y_train': y, 'X_test': x, 'Y_test': y}
 
 
 @p.provenance(returns_composite=True)

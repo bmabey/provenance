@@ -48,13 +48,13 @@ For an explanation of this example please see the `Introductory Guide`_.
     p.load_config(...)
 
     import time
-    
+
     @p.provenance()
     def expensive_add(a, b):
         time.sleep(2)
         return a + b
-    
-    
+
+
     @p.provenance()
     def expensive_mult(a, b):
         time.sleep(2)

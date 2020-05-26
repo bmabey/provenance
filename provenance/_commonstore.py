@@ -1,11 +1,13 @@
-import toolz as t
 import operator as op
+
+import toolz as t
 
 
 class PermissionError(Exception):
     def __init__(self, action, store, permission):
-        message = "A `{}` operation was attempted on {} and {} is set to `False`!".\
-                  format(action, store, permission)
+        message = 'A `{}` operation was attempted on {} and {} is set to `False`!'.format(
+            action, store, permission
+        )
         self.action = action
         self.store = store
         self.permission = permission
@@ -14,8 +16,7 @@ class PermissionError(Exception):
 
 class KeyExistsError(Exception):
     def __init__(self, key, store):
-        msg = "The key {} is already present in {}, you can not overwrite it!".\
-              format(key, store)
+        msg = 'The key {} is already present in {}, you can not overwrite it!'.format(key, store)
         self.key = key
         self.store = store
         Exception.__init__(self, msg)
@@ -23,7 +24,7 @@ class KeyExistsError(Exception):
 
 class InconsistentKeyError(Exception):
     def __init__(self, key, store, value):
-        msg = "The key {} already represents a different value in {}".format(key, store)
+        msg = 'The key {} already represents a different value in {}'.format(key, store)
         self.key = key
         self.store = store
         self.value = value
@@ -35,6 +36,7 @@ def find_first(pred, seq):
         if pred(i):
             return i
 
+
 def ensure_read(obj, action='get'):
     if not obj._read:
         raise PermissionError(action, obj, 'read')
@@ -44,11 +46,14 @@ def ensure_write(obj, action='put'):
     if not obj._write:
         raise PermissionError(action, obj, 'write')
 
+
 ensure_contains = t.partial(ensure_read, action='contains')
+
 
 def ensure_present(obj, id):
     if id not in obj:
         raise KeyError(id, obj)
+
 
 def ensure_delete(obj, id=None, check_contains=True):
     if not obj._delete:
@@ -66,6 +71,7 @@ def ensure_put(obj, id, read_through=None, check_contains=True):
     if check_contains and id in obj:
         raise KeyExistsError(id, obj)
 
+
 def chained_contains(chained, id, contains=op.contains):
     stores_with_read = [s for s in chained.stores if s._read]
     if len(stores_with_read) == 0:
@@ -75,6 +81,7 @@ def chained_contains(chained, id, contains=op.contains):
         if store._read and contains(store, id):
             return True
     return False
+
 
 def chained_put(chained, id, value, put=None, overwrite=False, contains=op.contains, **kargs):
     stores_with_write = [s for s in chained.stores if s._write]
@@ -91,8 +98,7 @@ def chained_put(chained, id, value, put=None, overwrite=False, contains=op.conta
                 record = store.put(id, value, **kargs)
             putin.append(store)
 
-    if (len(putin) == 0 and
-        len(stores_with_write) > 0):
+    if len(putin) == 0 and len(stores_with_write) > 0:
         raise KeyExistsError(id, chained)
 
     return record
@@ -143,14 +149,13 @@ def chained_delete(chained, id, delete=None, contains=op.contains):
 
 def chained_filename(chained, id):
     if id in chained:
+
         def valid_store(s):
-            return (s._read and
-                    hasattr(s, '_filename') and
-                    id in s)
+            return s._read and hasattr(s, '_filename') and id in s
 
         store = find_first(valid_store, chained.stores)
 
         if store is not None:
             return store._filename(id)
         else:
-            raise Exception("You do not have a disk-based store setup.")
+            raise Exception('You do not have a disk-based store setup.')

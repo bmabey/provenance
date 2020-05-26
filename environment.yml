@@ -22,6 +22,3 @@ dependencies:
   - sphinxcontrib-websupport
   - sphinx-autobuild
   - sphinx_rtd_theme
-
-
-

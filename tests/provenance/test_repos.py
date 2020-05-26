@@ -1,15 +1,15 @@
-from datetime import datetime
 import copy
+from datetime import datetime
 
 import pandas as pd
 import pytest
 import sqlalchemy_utils.functions as sql_utils
+from conftest import artifact_record
 
 import provenance as p
 import provenance._commonstore as cs
 import provenance.blobstores as bs
 import provenance.repos as r
-from conftest import artifact_record
 
 
 def test_inputs_json(db_session):
@@ -44,31 +44,29 @@ def test_inputs_json(db_session):
     now = datetime(2016, 9, 27, 7, 51, 11, 613544)
 
     expected_inputs_json = {
-        "__varargs": [],
-        "filename": "foo-bar",
-        "timestamp": now,
-        "inc_x": {
-            "id": "c74da9d379234901fe7a89e03fa800b0",  # md5
+        '__varargs': [],
+        'filename': 'foo-bar',
+        'timestamp': now,
+        'inc_x': {
+            'id': 'c74da9d379234901fe7a89e03fa800b0',  # md5
             # "id": "2c33a362ebd51f830d0b245473ab6c1269674259",  # sha1
-            "name": "test_repos.process_data_X",
-            "type": "ArtifactProxy"
+            'name': 'test_repos.process_data_X',
+            'type': 'ArtifactProxy',
         },
-        "inc_y": {
-            "id": "a1bd4d4ae1f33ae6379613618427f127",  # md5
+        'inc_y': {
+            'id': 'a1bd4d4ae1f33ae6379613618427f127',  # md5
             # "id": "f9b1bb7a8aaf435fbf60b92cd88bf6c46604f702",  # sha1
-            "name": "test_repos.process_data_Y",
-            "type": "ArtifactProxy"
-        }
+            'name': 'test_repos.process_data_Y',
+            'type': 'ArtifactProxy',
+        },
     }
 
-    results = pipeline(filename='foo-bar', process_x_inc=5, process_y_inc=10,
-                       timestamp=now)
+    results = pipeline(filename='foo-bar', process_x_inc=5, process_y_inc=10, timestamp=now)
     res = results['res'].artifact
     inputs_json = r._inputs_json(res.inputs)
     assert inputs_json == expected_inputs_json
 
-    results = pipeline(filename='foo-bar', process_x_inc=5, process_y_inc=10,
-                       timestamp=now)
+    results = pipeline(filename='foo-bar', process_x_inc=5, process_y_inc=10, timestamp=now)
     res = results['res'].artifact
     inputs_json = r._inputs_json(res.inputs)
     assert inputs_json == expected_inputs_json
@@ -83,7 +81,7 @@ def test_basic_repo_ops(repo):
     assert artifact.id in repo
     assert artifact in repo
 
-    with pytest.raises(cs.KeyExistsError) as e:
+    with pytest.raises(cs.KeyExistsError):
         repo.put(artifact)
 
     assert repo.get_by_id(artifact.id).id == artifact.id
@@ -96,20 +94,20 @@ def test_basic_repo_ops(repo):
         assert artifact.id not in repo.blobstore
         assert artifact.value_id not in repo.blobstore
 
-    with pytest.raises(KeyError) as e:
+    with pytest.raises(KeyError):
         repo.delete(artifact.id)
 
-    with pytest.raises(KeyError) as e:
+    with pytest.raises(KeyError):
         repo.get_by_id(artifact.id)
 
-    with pytest.raises(KeyError) as e:
+    with pytest.raises(KeyError):
         repo.get_by_value_id(artifact.id)
 
 
 @pytest.mark.parametrize('artifact_class', [r.ArtifactProxy, r.CallableArtifactProxy])
 @pytest.mark.parametrize('copy_method', [copy.copy, copy.deepcopy])
 def test_copy_Proxies(repo, artifact_class, copy_method):
-    class Artifact():
+    class Artifact:
         def __init__(self, id):
             self.id = id
 
@@ -133,12 +131,12 @@ def test_repo_set_put_and_finding(repo):
 
 
 def test_repo_raises_key_error_when_set_id_not_found(repo):
-    with pytest.raises(KeyError) as e:
+    with pytest.raises(KeyError):
         repo.get_set_by_id('foo')
 
 
 def test_repo_raises_key_error_when_set_name_not_found(repo):
-    with pytest.raises(KeyError) as e:
+    with pytest.raises(KeyError):
         repo.get_set_by_labels('foo')
 
 
@@ -161,7 +159,7 @@ def test_repo_delete_set(repo):
 
     repo.delete_set(artifact_set.id)
 
-    with pytest.raises(KeyError) as e:
+    with pytest.raises(KeyError):
         repo.get_set_by_id(artifact_set.id)
 
 
@@ -172,7 +170,7 @@ def test_permissions(atomic_repo):
     repo._write = False
     assert not repo._write
 
-    with pytest.raises(cs.PermissionError) as e:
+    with pytest.raises(cs.PermissionError):
         repo.put(artifact)
     assert artifact not in repo
 
@@ -181,19 +179,19 @@ def test_permissions(atomic_repo):
 
     repo._read = False
 
-    with pytest.raises(cs.PermissionError) as e:
+    with pytest.raises(cs.PermissionError):
         repo.get_by_id(artifact.id)
 
-    with pytest.raises(cs.PermissionError) as e:
+    with pytest.raises(cs.PermissionError):
         repo.get_by_value_id(artifact.value_id)
 
-    with pytest.raises(cs.PermissionError) as e:
+    with pytest.raises(cs.PermissionError):
         repo.get_value(artifact.id)
 
-    with pytest.raises(cs.PermissionError) as e:
+    with pytest.raises(cs.PermissionError):
         repo.get_inputs(artifact)
 
-    with pytest.raises(cs.PermissionError) as e:
+    with pytest.raises(cs.PermissionError):
         artifact.id in repo
 
     repo._read = True
@@ -201,7 +199,7 @@ def test_permissions(atomic_repo):
     assert artifact.id in repo
 
     repo._delete = False
-    with pytest.raises(cs.PermissionError) as e:
+    with pytest.raises(cs.PermissionError):
         repo.delete(artifact.id)
 
     repo._delete = True
@@ -210,8 +208,7 @@ def test_permissions(atomic_repo):
 
 
 def test_chained_with_readonly():
-    read_repo = r.MemoryRepo([artifact_record(id='foo')],
-                             read=True, write=False, delete=False)
+    read_repo = r.MemoryRepo([artifact_record(id='foo')], read=True, write=False, delete=False)
     write_repo = r.MemoryRepo(read=True, write=True, delete=False)
     repos = [read_repo, write_repo]
     chained = r.ChainedRepo(repos)
@@ -234,12 +231,9 @@ def test_chained_read_through_write():
     foo = artifact_record(id='foo')
     read_repo = r.MemoryRepo([foo], read=True, write=False)
     repo_ahead = r.MemoryRepo(read=True, write=True, read_through_write=True)
-    read_through_write_repo = r.MemoryRepo(read=True, write=True,
-                                           read_through_write=True)
-    no_read_through_write_repo = r.MemoryRepo(read=True, write=True,
-                                              read_through_write=False)
-    repos = [no_read_through_write_repo, read_through_write_repo, read_repo,
-             repo_ahead]
+    read_through_write_repo = r.MemoryRepo(read=True, write=True, read_through_write=True)
+    no_read_through_write_repo = r.MemoryRepo(read=True, write=True, read_through_write=False)
+    repos = [no_read_through_write_repo, read_through_write_repo, read_repo, repo_ahead]
     chained_repo = r.ChainedRepo(repos)
 
     assert 'foo' not in read_through_write_repo
@@ -256,8 +250,7 @@ def test_chained_read_through_write():
 def test_chained_writes_may_be_allowed_on_read_throughs_only():
     foo = artifact_record(id='foo')
     read_repo = r.MemoryRepo([foo], read=True, write=False)
-    read_through_write_only_repo = r.MemoryRepo(read=True, write=False,
-                                                read_through_write=True)
+    read_through_write_only_repo = r.MemoryRepo(read=True, write=False, read_through_write=True)
     write_repo = r.MemoryRepo(read=True, write=True, read_through_write=False)
     repos = [write_repo, read_through_write_only_repo, read_repo]
     chained_repo = r.ChainedRepo(repos)
@@ -280,9 +273,9 @@ def test_db_is_automatically_created_and_migrated(disk_store):
     if sql_utils.database_exists(db_conn_str):
         sql_utils.drop_database(db_conn_str)
 
-    repo = r.PostgresRepo(db_conn_str, disk_store,
-                          read=True, write=True, delete=True,
-                          create_db=True)
+    repo = r.PostgresRepo(
+        db_conn_str, disk_store, read=True, write=True, delete=True, create_db=True
+    )
     p.set_default_repo(repo)
 
     @p.provenance()
@@ -303,9 +296,15 @@ def test_db_is_automatically_created_and_migrated_with_the_right_schema(disk_sto
     if sql_utils.database_exists(db_conn_str):
         sql_utils.drop_database(db_conn_str)
 
-    repo = r.PostgresRepo(db_conn_str, disk_store,
-                          read=True, write=True, delete=True,
-                          create_db=True, schema='foobar')
+    repo = r.PostgresRepo(
+        db_conn_str,
+        disk_store,
+        read=True,
+        write=True,
+        delete=True,
+        create_db=True,
+        schema='foobar',
+    )
     p.set_default_repo(repo)
 
     @p.provenance()
@@ -315,18 +314,18 @@ def test_db_is_automatically_created_and_migrated_with_the_right_schema(disk_sto
     assert calculate(1, 2) == 3
 
     with repo.session() as s:
-        res = pd.read_sql("select * from foobar.artifacts", s.connection())
+        res = pd.read_sql('select * from foobar.artifacts', s.connection())
 
-    repo2 = r.PostgresRepo(db_conn_str, disk_store,
-                           read=True, write=True, delete=True,
-                           create_db=True, schema='baz')
+    repo2 = r.PostgresRepo(
+        db_conn_str, disk_store, read=True, write=True, delete=True, create_db=True, schema='baz',
+    )
 
     p.set_default_repo(repo2)
 
     assert calculate(5, 5) == 10
 
     with repo2.session() as s:
-        res = pd.read_sql("select * from baz.artifacts", s.connection())
+        res = pd.read_sql('select * from baz.artifacts', s.connection())
 
     assert res.iloc[0]['inputs_json'] == {'b': 5, 'a': 5, '__varargs': []}
 
@@ -341,9 +340,15 @@ def xtest_db_is_automatically_migrated(disk_store):
 
     sql_utils.create_database(db_conn_str)
 
-    repo = r.PostgresRepo(db_conn_str, disk_store,
-                          read=True, write=True, delete=True,
-                          create_db=False, upgrade_db=True)
+    repo = r.PostgresRepo(
+        db_conn_str,
+        disk_store,
+        read=True,
+        write=True,
+        delete=True,
+        create_db=False,
+        upgrade_db=True,
+    )
     p.set_default_repo(repo)
 
     @p.provenance()
@@ -358,7 +363,7 @@ def xtest_db_is_automatically_migrated(disk_store):
 
 
 def test_artifact_proxy_works_with_iterables():
-    class Foo(object):
+    class Foo:
         def __init__(self, a):
             self.a = a
 

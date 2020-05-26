@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from os.path import exists
+
 from setuptools import setup
 
 import versioneer
@@ -8,7 +9,7 @@ import versioneer
 subpackages = {
     'sftp': ['paramiko'],
     'google_storage': ['google-cloud'],
-    'vis':  ['graphviz', 'frozendict']
+    'vis': ['graphviz', 'frozendict'],
 }
 
 setup(
@@ -19,17 +20,16 @@ setup(
     install_requires=[open('requirements.txt').read().strip().split('\n')],
     extras_require=subpackages,
     include_package_data=True,
-    description="Provenance and caching library for functions, built for creating lightweight machine learning pipelines.",
-    long_description=(open('README.rst').read() if exists('README.rst')
-                      else ''),
-    author="Ben Mabey",
-    author_email="ben@benmabey.com",
-    url="http://github.com/bmabey/provenance",
-    license="MIT",
+    description='Provenance and caching library for functions, built for creating lightweight machine learning pipelines.',
+    long_description=(open('README.rst').read() if exists('README.rst') else ''),
+    author='Ben Mabey',
+    author_email='ben@benmabey.com',
+    url='http://github.com/bmabey/provenance',
+    license='MIT',
     classifiers=[
-        "Development Status :: 4 - Beta",
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
-        "License :: OSI Approved :: MIT License",
+        'License :: OSI Approved :: MIT License',
     ],
 )

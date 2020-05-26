@@ -8,10 +8,7 @@ from copy import copy
 import toolz as t
 from boltons import funcutils as bfu
 
-from . import artifact_hasher as ah
-from . import repos as repos
-from . import serializers as s
-from . import utils
+from . import artifact_hasher as ah, repos as repos, serializers as s, utils
 from ._dependencies import dependencies
 from .hashing import file_hash, hash
 
@@ -33,23 +30,40 @@ def get_metadata(f):
         return {}
 
 
-artifact_properties = ['id', 'value_id', 'inputs', 'fn_module', 'fn_name', 'value',
-                       'name', 'version', 'composite', 'value_id_duration',
-                       'serializer', 'load_kwargs', 'dump_kwargs',
-                       'compute_duration', 'hash_duration', 'computed_at',
-                       'custom_fields', 'input_artifact_ids', 'run_info']
+artifact_properties = [
+    'id',
+    'value_id',
+    'inputs',
+    'fn_module',
+    'fn_name',
+    'value',
+    'name',
+    'version',
+    'composite',
+    'value_id_duration',
+    'serializer',
+    'load_kwargs',
+    'dump_kwargs',
+    'compute_duration',
+    'hash_duration',
+    'computed_at',
+    'custom_fields',
+    'input_artifact_ids',
+    'run_info',
+]
 
 ArtifactRecord = namedtuple('ArtifactRecord', artifact_properties)
-
 
 
 def fn_info(f):
     info = utils.fn_info(f)
     metadata = get_metadata(f)
     name = metadata['name'] or '.'.join([info['module'], info['name']])
-    info['identifiers'] = {'name': name,
-                           'version': metadata['version'],
-                           'input_hash_fn': metadata['input_hash_fn']}
+    info['identifiers'] = {
+        'name': name,
+        'version': metadata['version'],
+        'input_hash_fn': metadata['input_hash_fn'],
+    }
     info['input_process_fn'] = metadata['input_process_fn']
     info['composite'] = metadata['returns_composite']
     info['archive_file'] = metadata['archive_file']
@@ -78,20 +92,21 @@ def fn_info(f):
             raise ValueError("With 'archive_file' set True you may not specify any load_kwargs.")
         info['serializer'] = 'file'
         info['load_kwargs'] = metadata['load_kwargs'] or {}
-        info['dump_kwargs'] = (metadata['dump_kwargs']
-                               or {'delete_original': metadata['delete_original_file']})
+        info['dump_kwargs'] = metadata['dump_kwargs'] or {
+            'delete_original': metadata['delete_original_file']
+        }
         info['delete_original_file'] = metadata['delete_original_file']
         valid_serializer = True
     else:
         info['serializer'] = metadata.get('serializer', 'auto') or 'auto'
         info['load_kwargs'] = metadata.get('load_kwargs', None)
         info['dump_kwargs'] = metadata.get('dump_kwargs', None)
-        valid_serializer = (info['serializer'] == 'auto'
-                            or info['serializer'] in s.serializers)
+        valid_serializer = info['serializer'] == 'auto' or info['serializer'] in s.serializers
 
     if not valid_serializer:
-        msg = 'Invalid serializer option "{}" for artifact "{}", available serialziers: {} '.\
-              format(info['serializer'], info['identifiers']['name'], tuple(s.serializers.keys()))
+        msg = 'Invalid serializer option "{}" for artifact "{}", available serialziers: {} '.format(
+            info['serializer'], info['identifiers']['name'], tuple(s.serializers.keys())
+        )
         raise ValueError(msg)
 
     return info
@@ -117,16 +132,21 @@ def hash_inputs(inputs, check_mutations=False, func_info=None):
         varargs.append(h)
         for a in artifacts:
             comp = all_artifacts.get(a.id, (a, []))
-            comp[1].append("varargs[{}]".format(i))
+            comp[1].append('varargs[{}]'.format(i))
             all_artifacts[a.id] = comp
 
     if check_mutations:
         for comp in all_artifacts.values():
             a, arg_names = comp
             if a.value_id != hash(a.value):
-                msg = "Artifact {}, of type {} was mutated before being passed to {}.{} as arguments ({})"
-                msg = msg.format(a.id, type(a.value), func_info.get('module'),
-                                 func_info.get('name'), ",".join(arg_names))
+                msg = 'Artifact {}, of type {} was mutated before being passed to {}.{} as arguments ({})'
+                msg = msg.format(
+                    a.id,
+                    type(a.value),
+                    func_info.get('module'),
+                    func_info.get('name'),
+                    ','.join(arg_names),
+                )
                 raise MutatedArtifactValueError(msg)
 
     input_hashes = {'kargs': kargs, 'varargs': tuple(varargs)}
@@ -134,16 +154,27 @@ def hash_inputs(inputs, check_mutations=False, func_info=None):
 
 
 def create_id(input_hashes, input_hash_fn, name, version):
-    return t.thread_first(input_hashes,
-                          input_hash_fn,
-                          (t.merge, {'name': name, 'version': version}),
-                          hash)
+    return t.thread_first(
+        input_hashes, input_hash_fn, (t.merge, {'name': name, 'version': version}), hash
+    )
 
 
 @t.curry
-def composite_artifact(repo, _run_info, inputs, input_hashes, input_artifact_ids,
-                       input_hash_fn, artifact_info, compute_duration,
-                       computed_at, use_cache, read_only, key, value):
+def composite_artifact(
+    repo,
+    _run_info,
+    inputs,
+    input_hashes,
+    input_artifact_ids,
+    input_hash_fn,
+    artifact_info,
+    compute_duration,
+    computed_at,
+    use_cache,
+    read_only,
+    key,
+    value,
+):
     start_hash_time = time.time()
     info = copy(artifact_info)
     info['composite'] = False
@@ -152,30 +183,32 @@ def composite_artifact(repo, _run_info, inputs, input_hashes, input_artifact_ids
     info['load_kwargs'] = info['load_kwargs'].get(key, None)
     info['dump_kwargs'] = info['dump_kwargs'].get(key, None)
 
-
-
     if info['serializer'] == 'auto':
-        info['serializer'] =  s.object_serializer(value)
+        info['serializer'] = s.object_serializer(value)
 
     id = create_id(input_hashes, input_hash_fn, info['name'], info['version'])
     hash_duration = time.time() - start_hash_time
-
-    start_value_id_time = time.time()
     value_id = hash(value)
     value_id_duration = time.time() - start_hash_time
-
 
     if not use_cache:
         id = hash(id + value_id)
     try:
         artifact = repo.get_by_id(id)
     except KeyError:
-        record = ArtifactRecord(id=id, value_id=value_id, value=value,
-                                input_artifact_ids=input_artifact_ids,
-                                value_id_duration=value_id_duration,
-                                compute_duration=compute_duration,
-                                hash_duration=hash_duration, computed_at=computed_at,
-                                inputs=inputs, run_info=_run_info, **info)
+        record = ArtifactRecord(
+            id=id,
+            value_id=value_id,
+            value=value,
+            input_artifact_ids=input_artifact_ids,
+            value_id_duration=value_id_duration,
+            compute_duration=compute_duration,
+            hash_duration=hash_duration,
+            computed_at=computed_at,
+            inputs=inputs,
+            run_info=_run_info,
+            **info
+        )
         if read_only:
             artifact = repos._artifact_from_record(repo, record)
         else:
@@ -191,8 +224,9 @@ def _base_fn(f):
         return f
 
 
-_EXT_MAPPINGS = {'mpeg': 'mpg',
-                 'jpeg': 'jpg'}
+_EXT_MAPPINGS = {'mpeg': 'mpg', 'jpeg': 'jpg'}
+
+
 def _extract_extension(filename):
     ext = os.path.splitext(filename)[1]
     if len(ext) > 0:
@@ -208,7 +242,9 @@ def _archive_file_hash(filename, preserve_file_ext):
     else:
         filename = str(filename)
     if not os.path.exists(filename):
-        raise FileNotFoundError("Unable to archive file, {}, because it doesn't exist!".format(filename))
+        raise FileNotFoundError(
+            "Unable to archive file, {}, because it doesn't exist!".format(filename)
+        )
     # TODO: figure out best place to put the hash_name config and use in both cases
     value_id = file_hash(filename)
     if preserve_file_ext:
@@ -228,15 +264,17 @@ def provenance_wrapper(repo, f):
     func_info = fn_info(f)
     input_process_fn = func_info['input_process_fn']
 
-    artifact_info = {'name': func_info['identifiers']['name'],
-                     'version': func_info['identifiers']['version'],
-                     'fn_name': func_info['name'], 'fn_module': func_info['module'],
-                     'custom_fields': func_info['custom_fields'],
-                     'serializer': func_info['serializer'],
-                     'load_kwargs': func_info['load_kwargs'],
-                     'dump_kwargs': func_info['dump_kwargs'],
-                     'composite': func_info['composite']}
-
+    artifact_info = {
+        'name': func_info['identifiers']['name'],
+        'version': func_info['identifiers']['version'],
+        'fn_name': func_info['name'],
+        'fn_module': func_info['module'],
+        'custom_fields': func_info['custom_fields'],
+        'serializer': func_info['serializer'],
+        'load_kwargs': func_info['load_kwargs'],
+        'dump_kwargs': func_info['dump_kwargs'],
+        'composite': func_info['composite'],
+    }
 
     @bfu.wraps(f)
     def _provenance_wrapper(*args, **kargs):
@@ -261,8 +299,10 @@ def provenance_wrapper(repo, f):
 
         start_hash_time = time.time()
         varargs, argsd = extract_args(args, kargs)
-        raw_inputs = {'varargs': varargs + func_info['varargs'],
-                      'kargs': t.merge(argsd, func_info['kargs'])}
+        raw_inputs = {
+            'varargs': varargs + func_info['varargs'],
+            'kargs': t.merge(argsd, func_info['kargs']),
+        }
         inputs = input_process_fn(raw_inputs)
 
         value_id = None
@@ -273,7 +313,9 @@ def provenance_wrapper(repo, f):
             value_id = _archive_file_hash(filename, func_info['preserve_file_ext'])
             inputs['filehash'] = value_id
 
-        input_hashes, input_artifact_ids = hash_inputs(inputs, repos.get_check_mutations(), func_info)
+        input_hashes, input_artifact_ids = hash_inputs(
+            inputs, repos.get_check_mutations(), func_info
+        )
 
         id = create_id(input_hashes, **func_info['identifiers'])
         hash_duration = time.time() - start_hash_time
@@ -286,7 +328,7 @@ def provenance_wrapper(repo, f):
             except AttributeError as e:
                 msg = 'The default repo is not set. '
                 msg += 'You may want to add  the `default_repo` key to your call to `provenance.load_config.` '
-                msg += 'e.g., provenance\.load_config({\'default_repo\': <default repo name>, ...})'
+                msg += 'e.g., provenance.load_config({\'default_repo\': <default repo name>, ...})'
                 raise AttributeError(msg).with_traceback(e.__traceback__)
         else:
             artifact = None
@@ -307,27 +349,34 @@ def provenance_wrapper(repo, f):
                         modified_inputs.append(name)
                 for i, _hash in enumerate(post_input_hashes['varargs']):
                     if _hash != varargs[i]:
-                        modified_inputs.append("varargs[{}]".format(i))
-                msg = "The {}.{} function modified arguments: ({})".format(
-                    func_info['module'], func_info['name'], ",".join(modified_inputs))
+                        modified_inputs.append('varargs[{}]'.format(i))
+                msg = 'The {}.{} function modified arguments: ({})'.format(
+                    func_info['module'], func_info['name'], ','.join(modified_inputs)
+                )
                 raise ImpureFunctionError(msg)
 
             if artifact_info_['composite']:
                 input_hash_fn = func_info['identifiers']['input_hash_fn']
-                ca = composite_artifact(r, _run_info, inputs, input_hashes,
-                                        input_artifact_ids, input_hash_fn,
-                                        artifact_info, compute_duration,
-                                        computed_at, use_cache, read_only)
+                ca = composite_artifact(
+                    r,
+                    _run_info,
+                    inputs,
+                    input_hashes,
+                    input_artifact_ids,
+                    input_hash_fn,
+                    artifact_info,
+                    compute_duration,
+                    computed_at,
+                    use_cache,
+                    read_only,
+                )
                 value = {k: ca(k, v) for k, v in value.items()}
                 artifact_info_['serializer'] = 'auto'
                 artifact_info_['load_kwargs'] = None
                 artifact_info_['dump_kwargs'] = None
 
-
             if artifact_info_['serializer'] == 'auto':
-                artifact_info_['serializer'] =  s.object_serializer(value)
-
-
+                artifact_info_['serializer'] = s.object_serializer(value)
 
             start_value_id_time = time.time()
             if archive_file:
@@ -347,13 +396,19 @@ def provenance_wrapper(repo, f):
                     artifact = None
 
             if artifact is None:
-                record = ArtifactRecord(id=id, value_id=value_id, value=value,
-                                        input_artifact_ids=input_artifact_ids,
-                                        value_id_duration=value_id_duration,
-                                        compute_duration=compute_duration,
-                                        hash_duration=hash_duration,
-                                        computed_at=computed_at, run_info=_run_info,
-                                        inputs=inputs, **artifact_info_)
+                record = ArtifactRecord(
+                    id=id,
+                    value_id=value_id,
+                    value=value,
+                    input_artifact_ids=input_artifact_ids,
+                    value_id_duration=value_id_duration,
+                    compute_duration=compute_duration,
+                    hash_duration=hash_duration,
+                    computed_at=computed_at,
+                    run_info=_run_info,
+                    inputs=inputs,
+                    **artifact_info_
+                )
                 if read_only:
                     artifact = repos._artifact_from_record(r, record)
                 else:
@@ -364,16 +419,15 @@ def provenance_wrapper(repo, f):
                 artifact.value.in_repo = True
 
         elif archive_file_helper and func_info.get('delete_original_file', False):
-        # if we hit an artifact with archive_file we may still need to clean up the
-        # referenced file. This is normally taken care of when the file is 'serialzied'
-        # (see file_dump), but in the case of an artifact hit this would never happen.
-        # One potential downside of this approach is that this local file will be
-        # deleted and if the artifact value (i.e. the existing file) is not local
-        # yet it will download the file that we just deleted. Another approach would
-        # be to do a a put_overwrite which would potentially upload files multiple times.
-        # So for now, the cleanest way is to accept the potential re-downloading of data.
+            # if we hit an artifact with archive_file we may still need to clean up the
+            # referenced file. This is normally taken care of when the file is 'serialzied'
+            # (see file_dump), but in the case of an artifact hit this would never happen.
+            # One potential downside of this approach is that this local file will be
+            # deleted and if the artifact value (i.e. the existing file) is not local
+            # yet it will download the file that we just deleted. Another approach would
+            # be to do a a put_overwrite which would potentially upload files multiple times.
+            # So for now, the cleanest way is to accept the potential re-downloading of data.
             os.remove(filename)
-
 
         return artifact.proxy()
 
@@ -387,9 +441,9 @@ def provenance_wrapper(repo, f):
         for arg, value in param_info.items():
             args.append(arg)
             if value != utils.UNSPECIFIED_ARG:
-               defaults.append(value)
-        arg_inv = ['{}={}'.format(arg,arg) for arg in args]
-        fb.body = 'return _provenance_wrapper(%s)' % ", ".join(arg_inv)
+                defaults.append(value)
+        arg_inv = ['{}={}'.format(arg, arg) for arg in args]
+        fb.body = 'return _provenance_wrapper(%s)' % ', '.join(arg_inv)
         fb.args = args
         fb.defaults = tuple(defaults)
         execdict = {'_provenance_wrapper': _provenance_wrapper}
@@ -402,6 +456,7 @@ def remove_inputs_fn(to_remove):
     def remove_inputs(inputs):
         kargs = t.keyfilter(lambda k: k not in to_remove, inputs['kargs'])
         return {'kargs': kargs, 'varargs': inputs['varargs']}
+
     return remove_inputs
 
 
@@ -427,8 +482,9 @@ def ensure_proxies(*parameters):
             else:
                 not_valid = [p for p in parameters if not repos.is_proxy(argsd[p])]
             if len(not_valid) > 0:
-                msg = "Arguments must be `ArtifactProxy`s but were not: [{}]"\
-                      .format(", ".join(not_valid))
+                msg = 'Arguments must be `ArtifactProxy`s but were not: [{}]'.format(
+                    ', '.join(not_valid)
+                )
                 raise ValueError(msg)
 
             return func(*args, **kargs)
@@ -438,12 +494,28 @@ def ensure_proxies(*parameters):
     return decorator
 
 
-def provenance(version=0, repo=None, name=None, merge_defaults=None,
-               ignore=None, input_hash_fn=None, remove=None, input_process_fn=None,
-               archive_file=False, delete_original_file=False, preserve_file_ext=False,
-               returns_composite=False, custom_fields=None,
-               serializer=None, load_kwargs=None, dump_kwargs=None, use_cache=None,
-               read_only=None, tags=None, _provenance_wrapper=provenance_wrapper):
+def provenance(
+    version=0,
+    repo=None,
+    name=None,
+    merge_defaults=None,
+    ignore=None,
+    input_hash_fn=None,
+    remove=None,
+    input_process_fn=None,
+    archive_file=False,
+    delete_original_file=False,
+    preserve_file_ext=False,
+    returns_composite=False,
+    custom_fields=None,
+    serializer=None,
+    load_kwargs=None,
+    dump_kwargs=None,
+    use_cache=None,
+    read_only=None,
+    tags=None,
+    _provenance_wrapper=provenance_wrapper,
+):
     """
     Decorates a function so that all inputs and outputs are cached. Wraps the return
     value in a proxy that has an artifact attached to it allowing for the provenance
@@ -583,7 +655,7 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
         reduce redundant storage of a given value.
     """
     if ignore and input_hash_fn:
-        raise ValueError("You cannot provide both ignore and input_hash_fn")
+        raise ValueError('You cannot provide both ignore and input_hash_fn')
 
     if ignore:
         ignore = frozenset(ignore)
@@ -593,7 +665,7 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
         input_hash_fn = lambda inputs: inputs
 
     if remove and input_process_fn:
-        raise ValueError("You cannot provide both remove and input_process_fn")
+        raise ValueError('You cannot provide both remove and input_process_fn')
 
     if remove:
         remove = frozenset(remove)
@@ -606,23 +678,25 @@ def provenance(version=0, repo=None, name=None, merge_defaults=None,
         _custom_fields = custom_fields or {}
         if tags:
             _custom_fields['tags'] = tags
-        f._provenance_metadata = {'version': version,
-                                  'name': name,
-                                  'archive_file': archive_file,
-                                  'delete_original_file': delete_original_file,
-                                  'input_hash_fn': input_hash_fn,
-                                  'input_process_fn': input_process_fn,
-                                  'archive_file': archive_file,
-                                  'delete_original_file': delete_original_file,
-                                  'preserve_file_ext': preserve_file_ext,
-                                  'returns_composite': returns_composite,
-                                  'archive_file': archive_file,
-                                  'custom_fields': _custom_fields,
-                                  'serializer': serializer,
-                                  'load_kwargs': load_kwargs,
-                                  'dump_kwargs': dump_kwargs,
-                                  'use_cache': use_cache,
-                                  'read_only': read_only}
+        f._provenance_metadata = {
+            'version': version,
+            'name': name,
+            'archive_file': archive_file,
+            'delete_original_file': delete_original_file,
+            'input_hash_fn': input_hash_fn,
+            'input_process_fn': input_process_fn,
+            'archive_file': archive_file,
+            'delete_original_file': delete_original_file,
+            'preserve_file_ext': preserve_file_ext,
+            'returns_composite': returns_composite,
+            'archive_file': archive_file,
+            'custom_fields': _custom_fields,
+            'serializer': serializer,
+            'load_kwargs': load_kwargs,
+            'dump_kwargs': dump_kwargs,
+            'use_cache': use_cache,
+            'read_only': read_only,
+        }
         f.__merge_defaults__ = merge_defaults
         return _provenance_wrapper(repo, f)
 
@@ -648,9 +722,9 @@ class ArchivedFile(object):
 
     def __repr__(self):
         if self.original_filename:
-            return "<ArchivedFile {}, {} >".format(self.blob_id, self.original_filename)
+            return '<ArchivedFile {}, {} >'.format(self.blob_id, self.original_filename)
         else:
-            return "<ArchivedFile {} >".format(self.blob_id)
+            return '<ArchivedFile {} >'.format(self.blob_id)
 
 
 def file_dump(archived_file, dest_filename, delete_original=False):
@@ -665,7 +739,9 @@ def file_load(id):
 s.register_serializer('file', file_dump, file_load)
 
 
-def archive_file(filename, name=None, delete_original=False, custom_fields=None, preserve_ext=False):
+def archive_file(
+    filename, name=None, delete_original=False, custom_fields=None, preserve_ext=False
+):
     """(beta) Copies or moves the provided filename into the Artifact Repository so it can
     be used as an ``ArtifactProxy`` to inputs of other functions.
 
@@ -693,17 +769,23 @@ def archive_file(filename, name=None, delete_original=False, custom_fields=None,
     # filename (see remove) but not the custom_fields.
     # filename is still passed in so the hash of the file on disk can be
     # computed as part of the id of the artifact.
-    @provenance(archive_file=True, name=name or 'archive_file', preserve_file_ext=preserve_ext,
-                delete_original_file=delete_original, remove=['_archive_file_filename'],
-                custom_fields=custom_fields)
+    @provenance(
+        archive_file=True,
+        name=name or 'archive_file',
+        preserve_file_ext=preserve_ext,
+        delete_original_file=delete_original,
+        remove=['_archive_file_filename'],
+        custom_fields=custom_fields,
+    )
     def _archive_file(_archive_file_filename, custom_fields):
         return filename
+
     return _archive_file(filename, custom_fields)
 
 
 def provenance_set(set_labels=None, initial_set=None, set_labels_fn=None):
     if set_labels and set_labels_fn:
-        raise ValueError("You cannot provide both set_labels and set_labels_fn.")
+        raise ValueError('You cannot provide both set_labels and set_labels_fn.')
 
     def make_wrapper(f):
         if set_labels_fn:

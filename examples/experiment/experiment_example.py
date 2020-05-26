@@ -3,10 +3,10 @@
 import csv
 import json
 import os
-import provenance as p
 import random
 import shutil
 
+import provenance as p
 
 p.load_yaml_config('config.yaml')
 
@@ -24,15 +24,22 @@ p.load_yaml_config('config.yaml')
 
 first_names = ['Eric', 'Belinda', 'Jane', 'Scott', 'Joe', 'Mike', 'Wilhelmina']
 last_names = ['Thompson', 'Erikson', 'Gandalfo', 'Wesson', 'Black', 'Stephens']
+
+
 def gen_name():
     return random.choice(first_names) + ' ' + random.choice(last_names)
+
 
 def gen_age():
     return random.randint(18, 100)
 
+
 street_names = ['Maple St', 'Corner Ave', 'West Helm Lp', '4th St', 'Main St', 'Center St']
+
+
 def gen_address():
     return str(random.randint(1000, 10000)) + ' ' + random.choice(street_names)
+
 
 def gen_matrix():
     return [[random.randint(0, 100) for x in range(3)] for y in range(3)]
@@ -45,6 +52,7 @@ def gen_matrix():
 ## of artifacts. It makes sense if each entry (which includes two files) becomes
 ## a set. We can name the set, then use that name to retreive the latest
 ## version.
+
 
 def save_entry(id, name, age, address, matrix):
     directory = os.path.join('./experiment_data', id)
@@ -59,14 +67,22 @@ def save_entry(id, name, age, address, matrix):
         with open(os.path.join(directory, 'matrix.csv'), 'w') as matrixf:
             writer = csv.writer(matrixf)
             writer.writerows(matrix)
-        p.archive_file(os.path.join(directory, 'demographic.json'), name=id+'/demographic', delete_original=True)
-        p.archive_file(os.path.join(directory, 'matrix.csv'), name=id+'/matrix', delete_original=True)
+        p.archive_file(
+            os.path.join(directory, 'demographic.json'),
+            name=id + '/demographic',
+            delete_original=True,
+        )
+        p.archive_file(
+            os.path.join(directory, 'matrix.csv'), name=id + '/matrix', delete_original=True
+        )
 
     write_entry()
+
 
 ################################################################################
 ## Simulate some number of participants, you wouldn't actually have this code in
 ## your experiment.
+
 
 def simulate_entry(id):
     name = gen_name()
@@ -74,6 +90,7 @@ def simulate_entry(id):
     address = gen_address()
     matrix = gen_matrix()
     save_entry(id, name, age, address, matrix)
+
 
 def simulate_experiment(num_participants):
     # I use the experiment_data as a temporary location to write the data to.
@@ -86,5 +103,6 @@ def simulate_experiment(num_participants):
 
     # ... then I erase the folder at the end.
     shutil.rmtree('./experiment_data')
+
 
 simulate_experiment(10)

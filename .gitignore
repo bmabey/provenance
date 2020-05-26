@@ -24,4 +24,3 @@ docs/build
 .pytest_cache/
 .vscode/
 .mypy_cache/
-

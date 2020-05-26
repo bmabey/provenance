@@ -1,9 +1,7 @@
 import os
+
 import paramiko
-import shutil
-from joblib.disk import mkdirp
-from ..serializers import DEFAULT_VALUE_SERIALIZER, DEFAULT_INPUT_SERIALIZER
-from .. import _commonstore as cs
+
 from .. import blobstores as bs
 
 
@@ -19,11 +17,21 @@ def _ssh_client(ssh_config):
 
 
 class SFTPStore(bs.RemoteStore):
-    def __init__(self, cachedir, basepath,
-                 ssh_config=None, ssh_client=None, sftp_client=None,
-                 read=True, write=True, read_through_write=True,
-                 delete=False, on_duplicate_key='skip', cleanup_cachedir=False,
-                 always_check_remote=False):
+    def __init__(
+        self,
+        cachedir,
+        basepath,
+        ssh_config=None,
+        ssh_client=None,
+        sftp_client=None,
+        read=True,
+        write=True,
+        read_through_write=True,
+        delete=False,
+        on_duplicate_key='skip',
+        cleanup_cachedir=False,
+        always_check_remote=False,
+    ):
         """
         Parameters
         ----------
@@ -35,13 +43,17 @@ class SFTPStore(bs.RemoteStore):
         some reason. Since the SFTPStore basically doubles as a DiskStore with it's cachedir
         chaining the two doesn't really make sense though.
         """
-        super(SFTPStore, self).__init__(always_check_remote=always_check_remote,
-                                      cachedir = cachedir,
-                                      basepath = basepath,
-                                      cleanup_cachedir = cleanup_cachedir,
-                                      read=read, write=write, read_through_write=read_through_write,
-                                      delete=delete, on_duplicate_key=on_duplicate_key)
-
+        super(SFTPStore, self).__init__(
+            always_check_remote=always_check_remote,
+            cachedir=cachedir,
+            basepath=basepath,
+            cleanup_cachedir=cleanup_cachedir,
+            read=read,
+            write=write,
+            read_through_write=read_through_write,
+            delete=delete,
+            on_duplicate_key=on_duplicate_key,
+        )
 
         self.ssh_client = None
         if ssh_config is not None:
@@ -53,9 +65,11 @@ class SFTPStore(bs.RemoteStore):
         else:
             # This is to allow testing the importing/subpackage aspect without
             # having to actually test the class by mocking an ssh connection.
-            if cachedir == None and basepath == None:
+            if cachedir is None and basepath is None:
                 return
-            raise ValueError('You must specify a SFTP client by passing in one of: sftp_client, ssh_config, ssh_client')
+            raise ValueError(
+                'You must specify a SFTP client by passing in one of: sftp_client, ssh_config, ssh_client'
+            )
 
     def _exists(self, path):
         try:
