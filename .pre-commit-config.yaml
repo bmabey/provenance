@@ -1,7 +1,7 @@
 repos:
 
   -   repo: https://github.com/pre-commit/pre-commit-hooks
-      rev: v2.5.0
+      rev: v3.1.0
       hooks:
       -   id: trailing-whitespace
       -   id: end-of-file-fixer
@@ -17,7 +17,7 @@ repos:
         args: ["--line-length", "100", "--skip-string-normalization"]
 
   -   repo: https://gitlab.com/pycqa/flake8
-      rev: 3.8.1
+      rev: 3.8.2
       hooks:
       - id: flake8
 
