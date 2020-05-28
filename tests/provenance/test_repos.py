@@ -314,7 +314,7 @@ def test_db_is_automatically_created_and_migrated(disk_store):
 
 
 def test_db_is_automatically_created_and_migrated_with_the_right_schema(
-    disk_store):
+        disk_store):
     db_conn_str = 'postgresql://localhost/test_provenance_autocreate_schema'
     if sql_utils.database_exists(db_conn_str):
         sql_utils.drop_database(db_conn_str)

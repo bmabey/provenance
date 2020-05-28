@@ -87,7 +87,7 @@ def test_hashing_of_artifacts_and_proxies(repo):
 
 
 def test_hashing_with_artifact_hasher_also_returns_iter_of_artifacts_preserves_hash(
-    repo):
+        repo):
     @p.provenance()
     def load_data():
         return [1, 2, 3]

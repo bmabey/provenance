@@ -160,7 +160,7 @@ def test_output_is_archived_as_file(dbdiskrepo):
 
 
 def test_archived_file_becoming_loaded_value_while_persisting_artifact_info(
-    dbdiskrepo):
+        dbdiskrepo):
     tmp_dir = tempfile.mkdtemp('prov_integration_archive_test')
     data_filename = os.path.join(tmp_dir, 'data.csv')
     pd.DataFrame({
@@ -236,7 +236,7 @@ def test_archived_file_cache_hits_when_filename_is_different(dbdiskrepo):
 
 
 def test_archived_file_creates_a_new_artifact_when_custom_fields_are_different(
-    dbdiskrepo):
+        dbdiskrepo):
     assert p.get_default_repo() is not None
     tmp_dir = tempfile.mkdtemp('prov_integration_archive_test')
     data_filename = os.path.join(tmp_dir, 'data.csv')
@@ -665,7 +665,7 @@ def test_provenance_set_decorator_being_named_with_fn(repo):
 
 
 def test_provenance_set_decorator_being_named_with_fn_retunring_labels_dict(
-    repo):
+        repo):
     @p.provenance()
     def add(a, b):
         return a + b
