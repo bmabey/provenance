@@ -134,7 +134,7 @@ db_session_ = db_session
         'dbrepo-diskstore',
         'dbrepo-memorystore',
         'chained-memmem',
-    #   'chained-repo'
+    # 'chained-repo'
     ],
 )
 def repo(request, db_session):
