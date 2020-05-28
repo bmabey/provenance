@@ -18,7 +18,8 @@ def args_extractor(f, merge_defaults=False):
     """
     spec = inspect.getfullargspec(f)
     if spec.defaults:
-        param_defaults = dict(zip(spec.args[-len(spec.defaults) :], spec.defaults))
+        param_defaults = dict(
+            zip(spec.args[-len(spec.defaults):], spec.defaults))
     else:
         param_defaults = {}
     named_param_defaults = spec.kwonlydefaults or {}
@@ -94,7 +95,8 @@ def _func_param_info(argspec):
     params = argspec.args
     defaults = argspec.defaults or []
     start_default_ix = -max(len(defaults), 1) - 1
-    values = [UNSPECIFIED_ARG] * (len(params) - len(defaults)) + list(defaults[start_default_ix:])
+    values = [UNSPECIFIED_ARG] * (len(params) - len(defaults)) + list(
+        defaults[start_default_ix:])
     return OrderedDict(zip(params, values))
 
 
@@ -121,14 +123,24 @@ def inner_function(partial_fn):
 def partial_fn_info(partial_fn):
     fn = inner_function(partial_fn)
     varargs, kargs = args_extractor(fn)(partial_fn.args, partial_fn.keywords)
-    return {'varargs': varargs, 'kargs': kargs, 'module': fn.__module__, 'name': fn.__name__}
+    return {
+        'varargs': varargs,
+        'kargs': kargs,
+        'module': fn.__module__,
+        'name': fn.__name__
+    }
 
 
 # TODO: consider using the functions in joblib.func_inspect, e.g. for the fn name
 def fn_info(fn):
     if 'func' in dir(fn):
         return partial_fn_info(fn)
-    return {'name': fn.__name__, 'module': fn.__module__, 'varargs': (), 'kargs': {}}
+    return {
+        'name': fn.__name__,
+        'module': fn.__module__,
+        'varargs': (),
+        'kargs': {}
+    }
 
 
 def when_type(type):

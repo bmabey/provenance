@@ -37,13 +37,13 @@ def test_integration_test(repo):
     def load_data(filename):
         return [1, 2]
 
-    @p.provenance(repo=repo, remove=('to_remove',))
+    @p.provenance(repo=repo, remove=('to_remove', ))
     def process_data_A(data, process_a_inc, to_remove):
         return [i + process_a_inc for i in data]
 
     times_called = 0
 
-    @p.provenance(ignore=('to_ignore',))
+    @p.provenance(ignore=('to_ignore', ))
     def process_data_B(data, process_b_inc, to_ignore):
         nonlocal times_called
         times_called += 1
@@ -54,10 +54,10 @@ def test_integration_test(repo):
         return [a + b for a, b in zip(inc_a, inc_b)]
 
     def run_pipeline(filename, to_ignore, to_remove):
-        data = load_data(filename)  # [1, 2]
-        inc_a = process_data_A(data, 1, to_remove)  # [2, 3]
-        inc_b = process_data_B(data, 5, to_ignore)  # [6, 7]
-        res = combine_processed_data(inc_a, inc_b)  # [8, 10]
+        data = load_data(filename)    # [1, 2]
+        inc_a = process_data_A(data, 1, to_remove)    # [2, 3]
+        inc_b = process_data_B(data, 5, to_ignore)    # [6, 7]
+        res = combine_processed_data(inc_a, inc_b)    # [8, 10]
         return res
 
     result = run_pipeline('foo-bar.csv', 'something', 'removed')
@@ -75,7 +75,13 @@ def test_integration_test(repo):
     assert artifact.tags == ['tag_a']
 
     # check that inputs were removed
-    assert inc_a_artifact.inputs == {'kargs': {'data': [1, 2], 'process_a_inc': 1}, 'varargs': ()}
+    assert inc_a_artifact.inputs == {
+        'kargs': {
+            'data': [1, 2],
+            'process_a_inc': 1
+        },
+        'varargs': ()
+    }
 
     # check metadata
     data_artifact = inc_a_artifact.inputs['kargs']['data'].artifact
@@ -84,7 +90,8 @@ def test_integration_test(repo):
 
     # Check caching
     assert times_called == 1
-    new_res = run_pipeline('foo-bar.csv', 'something-different', 'removed-again')
+    new_res = run_pipeline('foo-bar.csv', 'something-different',
+                           'removed-again')
     assert new_res == [8, 10]
     assert times_called == 1
 
@@ -98,19 +105,23 @@ def test_integration_test(repo):
     ]
 
     # Check that the input_artifact_ids were properly stored
-    assert result.artifact.input_artifact_ids == frozenset((inc_a_artifact.id, inc_b_artifact.id))
+    assert result.artifact.input_artifact_ids == frozenset(
+        (inc_a_artifact.id, inc_b_artifact.id))
 
 
 def test_archived_file_used_in_input(dbdiskrepo):
     assert p.get_default_repo() is not None
     tmp_dir = tempfile.mkdtemp('prov_integration_archive_test')
     data_filename = os.path.join(tmp_dir, 'data.csv')
-    pd.DataFrame({'a': [0, 1, 2], 'b': [10, 11, 12]}).to_csv(data_filename, index=False)
+    pd.DataFrame({
+        'a': [0, 1, 2],
+        'b': [10, 11, 12]
+    }).to_csv(data_filename, index=False)
 
     assert os.path.exists(data_filename)
-    archived_file = p.archive_file(
-        data_filename, delete_original=True, custom_fields={'foo': 'bar'}
-    )
+    archived_file = p.archive_file(data_filename,
+                                   delete_original=True,
+                                   custom_fields={'foo': 'bar'})
     assert not os.path.exists(data_filename)
     assert archived_file.artifact.custom_fields == {'foo': 'bar'}
 
@@ -129,7 +140,10 @@ def test_archived_file_used_in_input(dbdiskrepo):
 def test_output_is_archived_as_file(dbdiskrepo):
     tmp_dir = tempfile.mkdtemp('prov_integration_archive_test')
     data_filename = os.path.join(tmp_dir, 'data.csv')
-    pd.DataFrame({'a': [0, 1, 2], 'b': [10, 11, 12]}).to_csv(data_filename, index=False)
+    pd.DataFrame({
+        'a': [0, 1, 2],
+        'b': [10, 11, 12]
+    }).to_csv(data_filename, index=False)
     archived_file = p.archive_file(data_filename, delete_original=True)
 
     @p.provenance(archive_file=True, delete_original_file=True)
@@ -145,10 +159,14 @@ def test_output_is_archived_as_file(dbdiskrepo):
     assert list(ret['c'].values) == [10, 12, 14]
 
 
-def test_archived_file_becoming_loaded_value_while_persisting_artifact_info(dbdiskrepo):
+def test_archived_file_becoming_loaded_value_while_persisting_artifact_info(
+    dbdiskrepo):
     tmp_dir = tempfile.mkdtemp('prov_integration_archive_test')
     data_filename = os.path.join(tmp_dir, 'data.csv')
-    pd.DataFrame({'a': [0, 1, 2], 'b': [10, 11, 12]}).to_csv(data_filename, index=False)
+    pd.DataFrame({
+        'a': [0, 1, 2],
+        'b': [10, 11, 12]
+    }).to_csv(data_filename, index=False)
     archived_file = p.archive_file(data_filename, delete_original=True)
 
     @p.provenance(archive_file=True, delete_original_file=True)
@@ -172,9 +190,14 @@ def test_archived_file_allows_extensions_to_be_ignored(dbdiskrepo):
     assert p.get_default_repo() is not None
     tmp_dir = tempfile.mkdtemp('prov_integration_archive_test')
     data_filename = os.path.join(tmp_dir, 'data.csv00')
-    pd.DataFrame({'a': [0, 1, 2], 'b': [10, 11, 12]}).to_csv(data_filename, index=False)
+    pd.DataFrame({
+        'a': [0, 1, 2],
+        'b': [10, 11, 12]
+    }).to_csv(data_filename, index=False)
 
-    archived_file = p.archive_file(data_filename, delete_original=True, preserve_ext=False)
+    archived_file = p.archive_file(data_filename,
+                                   delete_original=True,
+                                   preserve_ext=False)
 
     assert not archived_file.artifact.value_id.endswith('.csv')
 
@@ -185,7 +208,9 @@ def test_archived_file_canonicalizes_file_extenstions(dbdiskrepo):
     data_filename = os.path.join(tmp_dir, 'foo.MPEG')
     spit(data_filename, 'blah')
 
-    archived_file = p.archive_file(data_filename, delete_original=True, preserve_ext=True)
+    archived_file = p.archive_file(data_filename,
+                                   delete_original=True,
+                                   preserve_ext=True)
 
     assert archived_file.artifact.value_id.endswith('.mpg')
 
@@ -194,7 +219,10 @@ def test_archived_file_cache_hits_when_filename_is_different(dbdiskrepo):
     assert p.get_default_repo() is not None
     tmp_dir = tempfile.mkdtemp('prov_integration_archive_test')
     data_filename = os.path.join(tmp_dir, 'data.csv')
-    pd.DataFrame({'a': [0, 1, 2], 'b': [10, 11, 12]}).to_csv(data_filename, index=False)
+    pd.DataFrame({
+        'a': [0, 1, 2],
+        'b': [10, 11, 12]
+    }).to_csv(data_filename, index=False)
 
     data_filename2 = os.path.join(tmp_dir, 'data2.csv')
     shutil.copyfile(data_filename, data_filename2)
@@ -207,26 +235,36 @@ def test_archived_file_cache_hits_when_filename_is_different(dbdiskrepo):
     assert archived_file.artifact.id == archived_file2.artifact.id
 
 
-def test_archived_file_creates_a_new_artifact_when_custom_fields_are_different(dbdiskrepo):
+def test_archived_file_creates_a_new_artifact_when_custom_fields_are_different(
+    dbdiskrepo):
     assert p.get_default_repo() is not None
     tmp_dir = tempfile.mkdtemp('prov_integration_archive_test')
     data_filename = os.path.join(tmp_dir, 'data.csv')
-    pd.DataFrame({'a': [0, 1, 2], 'b': [10, 11, 12]}).to_csv(data_filename, index=False)
+    pd.DataFrame({
+        'a': [0, 1, 2],
+        'b': [10, 11, 12]
+    }).to_csv(data_filename, index=False)
 
     data_filename2 = os.path.join(tmp_dir, 'data2.csv')
     shutil.copyfile(data_filename, data_filename2)
 
     archived_file = p.archive_file(
-        data_filename, delete_original=True, custom_fields={'data_source': 'provider one'}
-    )
+        data_filename,
+        delete_original=True,
+        custom_fields={'data_source': 'provider one'})
     archived_file2 = p.archive_file(
-        data_filename2, delete_original=True, custom_fields={'data_source': 'provider two'}
-    )
+        data_filename2,
+        delete_original=True,
+        custom_fields={'data_source': 'provider two'})
 
     assert archived_file.artifact.id != archived_file2.artifact.id
     assert archived_file.artifact.value_id == archived_file2.artifact.value_id
-    assert archived_file.artifact.custom_fields == {'data_source': 'provider one'}
-    assert archived_file2.artifact.custom_fields == {'data_source': 'provider two'}
+    assert archived_file.artifact.custom_fields == {
+        'data_source': 'provider one'
+    }
+    assert archived_file2.artifact.custom_fields == {
+        'data_source': 'provider two'
+    }
 
 
 def test_fn_with_merged_defaults_set_with_provenance_decorator(repo):
@@ -234,7 +272,10 @@ def test_fn_with_merged_defaults_set_with_provenance_decorator(repo):
     def add(data, adders={'a': 1, 'b': 2}):
         return {k: [i + inc for i in data] for k, inc in adders.items()}
 
-    assert add([1, 2, 3], adders={'c': 2, 'b': 0}) == {
+    assert add([1, 2, 3], adders={
+        'c': 2,
+        'b': 0
+    }) == {
         'a': [2, 3, 4],
         'b': [1, 2, 3],
         'c': [3, 4, 5],
@@ -248,13 +289,19 @@ def test_with_merged_defaults_used_on_fn(repo):
 
     fetch_add = p.provenance()(add)
 
-    assert add([1, 2, 3], adders={'c': 2, 'b': 0}) == {
+    assert add([1, 2, 3], adders={
+        'c': 2,
+        'b': 0
+    }) == {
         'a': [2, 3, 4],
         'b': [1, 2, 3],
         'c': [3, 4, 5],
     }
 
-    assert fetch_add([1, 2, 3], adders={'c': 2, 'b': 0}) == {
+    assert fetch_add([1, 2, 3], adders={
+        'c': 2,
+        'b': 0
+    }) == {
         'a': [2, 3, 4],
         'b': [1, 2, 3],
         'c': [3, 4, 5],
@@ -310,9 +357,11 @@ def test_serialization_of_series_uses_parquet(repo):
 
 
 def test_composite_artifacts(repo):
-    @p.provenance(
-        returns_composite=True, serializer={'a': 'cloudpickle'}, load_kwargs={'b': {'memmap': True}}
-    )
+    @p.provenance(returns_composite=True,
+                  serializer={'a': 'cloudpickle'},
+                  load_kwargs={'b': {
+                      'memmap': True
+                  }})
     def load_data():
         return {'a': 1, 'b': 2, 'c': 3}
 
@@ -605,7 +654,8 @@ def test_provenance_set_decorator_being_named_with_fn(repo):
     def mult(x, y):
         return x * y
 
-    @p.provenance_set(set_labels_fn=lambda a, b, y: 'pipeline_{}_{}'.format(a, b))
+    @p.provenance_set(
+        set_labels_fn=lambda a, b, y: 'pipeline_{}_{}'.format(a, b))
     def my_pipeline(a, b=5, y=10):
         x = add(a, b)
         _ = mult(x, y)
@@ -614,7 +664,8 @@ def test_provenance_set_decorator_being_named_with_fn(repo):
     assert my_set.name == 'pipeline_2_5'
 
 
-def test_provenance_set_decorator_being_named_with_fn_retunring_labels_dict(repo):
+def test_provenance_set_decorator_being_named_with_fn_retunring_labels_dict(
+    repo):
     @p.provenance()
     def add(a, b):
         return a + b
@@ -623,7 +674,8 @@ def test_provenance_set_decorator_being_named_with_fn_retunring_labels_dict(repo
     def mult(x, y):
         return x * y
 
-    @p.provenance_set(set_labels_fn=lambda **kargs: t.assoc(kargs, 'name', 'foobar'))
+    @p.provenance_set(
+        set_labels_fn=lambda **kargs: t.assoc(kargs, 'name', 'foobar'))
     def my_pipeline(a, b=5, y=10):
         x = add(a, b)
         _ = mult(x, y)
@@ -643,7 +695,8 @@ def test_provenance_set_decorator_being_named_with_fn_used_with_curry(repo):
 
     @t.curry
     @p.provenance()
-    @p.provenance_set(set_labels_fn=lambda a, b, y: 'pipeline_{}_{}_{}'.format(a, b, y))
+    @p.provenance_set(
+        set_labels_fn=lambda a, b, y: 'pipeline_{}_{}_{}'.format(a, b, y))
     def my_pipeline(a, b, y=30):
         x = add(a, b)
         _ = mult(x, y)
@@ -850,8 +903,7 @@ def test_check_mutations(repo, with_check_mutations):
     with pytest.raises(pc.MutatedArtifactValueError) as excinfo:
         process_data(data)
     expected_msg = 'Artifact {}, of type {} was mutated before being passed to test_core.process_data as arguments (data)'.format(
-        data.artifact.id, type(data.artifact.value)
-    )
+        data.artifact.id, type(data.artifact.value))
     assert str(excinfo.value) == expected_msg
 
 

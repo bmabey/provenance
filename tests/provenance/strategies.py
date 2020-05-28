@@ -1,15 +1,13 @@
 import hypothesis.strategies as st
 import numpy as np
 
-primitive_data = (
-    st.floats(allow_nan=False)
-    | st.booleans()
-    | st.text()
-    | st.none()
-    | st.fractions()
-    | st.integers()
-    | st.characters()
-)
+primitive_data = (st.floats(allow_nan=False)
+                  | st.booleans()
+                  | st.text()
+                  | st.none()
+                  | st.fractions()
+                  | st.integers()
+                  | st.characters())
 # | st.complex_numbers() \ nanj is annoying to deal with
 # | st.decimals() can add back in once a new version of joblib is released with bug fix
 

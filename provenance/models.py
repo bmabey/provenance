@@ -10,7 +10,7 @@ from memoized_property import memoized_property
 Base = sa.ext.declarative.declarative_base()
 
 SHA1_LENGTH = 40
-VALUE_ID_LENGTH = SHA1_LENGTH + 10  # extra 10 for optional file extension info
+VALUE_ID_LENGTH = SHA1_LENGTH + 10    # extra 10 for optional file extension info
 
 
 class Run(Base):
@@ -127,7 +127,11 @@ class ArtifactSet(Base):
 
     @memoized_property
     def props(self):
-        return {'id': self.set_id, 'labels': self.labels, 'created_at': self.created_at}
+        return {
+            'id': self.set_id,
+            'labels': self.labels,
+            'created_at': self.created_at
+        }
 
     def __repr__(self):
         return '<ArtifactSet %r, %r>' % (self.set_id, self.labels)
@@ -137,8 +141,10 @@ class ArtifactSetMember(Base):
     __tablename__ = 'artifact_set_members'
 
     set_id = sa.Column(
-        pg.VARCHAR(SHA1_LENGTH), primary_key=True  # sa.ForeignKey("artifact_sets.set_id"),
+        pg.VARCHAR(SHA1_LENGTH),
+        primary_key=True    # sa.ForeignKey("artifact_sets.set_id"),
     )
     artifact_id = sa.Column(
-        pg.VARCHAR(SHA1_LENGTH), primary_key=True  # sa.ForeignKey("artifacts.id"),
+        pg.VARCHAR(SHA1_LENGTH),
+        primary_key=True    # sa.ForeignKey("artifacts.id"),
     )

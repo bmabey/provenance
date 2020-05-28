@@ -10,11 +10,11 @@ repos:
       -   id: check-yaml
       -   id: double-quote-string-fixer
 
-  -   repo: https://github.com/ambv/black
-      rev: 19.10b0
+  -   repo: https://github.com/pre-commit/mirrors-yapf
+      rev: v0.30.0
       hooks:
-      - id: black
-        args: ["--line-length", "100", "--skip-string-normalization"]
+       -  id: yapf
+          args: ['--parallel', '--in-place']
 
   -   repo: https://gitlab.com/pycqa/flake8
       rev: 3.8.2

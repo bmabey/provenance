@@ -134,7 +134,7 @@ db_session_ = db_session
         'dbrepo-diskstore',
         'dbrepo-memorystore',
         'chained-memmem',
-        #   'chained-repo'
+    #   'chained-repo'
     ],
 )
 def repo(request, db_session):
@@ -148,18 +148,24 @@ def repo(request, db_session):
         repo = r.MemoryRepo(read=True, write=True, delete=True)
     elif request.param == 'dbrepo-diskstore':
         disk_store_gen = disk_store()
-        repo = r.DbRepo(db_session, next(disk_store_gen), read=True, write=True, delete=True)
+        repo = r.DbRepo(db_session,
+                        next(disk_store_gen),
+                        read=True,
+                        write=True,
+                        delete=True)
     elif request.param == 'chained-memmem':
-        repo = r.ChainedRepo(
-            [
-                r.MemoryRepo(read=True, write=True, delete=True),
-                r.MemoryRepo(read=True, write=True, delete=True),
-            ]
-        )
+        repo = r.ChainedRepo([
+            r.MemoryRepo(read=True, write=True, delete=True),
+            r.MemoryRepo(read=True, write=True, delete=True),
+        ])
     elif request.param == 'chained-repo':
         disk_store_gen = disk_store()
         disk_store_gen2 = disk_store()
-        repo1 = r.DbRepo(db_session, next(disk_store_gen), read=True, write=True, delete=True)
+        repo1 = r.DbRepo(db_session,
+                         next(disk_store_gen),
+                         read=True,
+                         write=True,
+                         delete=True)
         os.chdir(prevdir)
         repo2 = r.DbRepo(
             'postgresql://localhost/test_provenance',
@@ -171,7 +177,11 @@ def repo(request, db_session):
         )
         repo = r.ChainedRepo([repo1, repo2])
     else:
-        repo = r.DbRepo(db_session, memory_store(), read=True, write=True, delete=True)
+        repo = r.DbRepo(db_session,
+                        memory_store(),
+                        read=True,
+                        write=True,
+                        delete=True)
 
     p.set_default_repo(repo)
     yield repo
@@ -195,7 +205,9 @@ def dbdiskrepo(request, db_session):
 another_dbdiskrepo = dbdiskrepo
 
 
-@pytest.fixture(scope='function', params=['memoryrepo' 'dbrepo-diskstore', 'dbrepo-memorystore'])
+@pytest.fixture(scope='function',
+                params=['memoryrepo'
+                        'dbrepo-diskstore', 'dbrepo-memorystore'])
 def atomic_repo(request, db_session):
     repo_gen = repo(request, db_session)
     yield next(repo_gen)
@@ -208,10 +220,14 @@ _artifact_record_st = st.fixed_dictionaries({'id': md5, 'value_id': md5})
 
 def artifact_record(**kargs):
     artifact_props = t.merge(
-        {k: None for k in pc.artifact_properties},
+        {k: None
+         for k in pc.artifact_properties},
         _artifact_record_st.example(),
         {
-            'inputs': {'varargs': [1, 2, 3], 'kargs': {}},
+            'inputs': {
+                'varargs': [1, 2, 3],
+                'kargs': {}
+            },
             'fn_module': 'foo',
             'fn_name': 'bar',
             'value': 55,

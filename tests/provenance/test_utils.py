@@ -8,7 +8,12 @@ def test_fn_info_with_regular_function():
         return x + 1
 
     info = u.fn_info(inc)
-    assert info == {'name': 'inc', 'module': 'test_utils', 'varargs': (), 'kargs': {}}
+    assert info == {
+        'name': 'inc',
+        'module': 'test_utils',
+        'varargs': (),
+        'kargs': {}
+    }
 
 
 def test_fn_info_with_partial():
@@ -18,7 +23,14 @@ def test_fn_info_with_partial():
     double = t.partial(mult, 2)
     info = u.fn_info(double)
 
-    assert info == {'name': 'mult', 'module': 'test_utils', 'varargs': (), 'kargs': {'x': 2}}
+    assert info == {
+        'name': 'mult',
+        'module': 'test_utils',
+        'varargs': (),
+        'kargs': {
+            'x': 2
+        }
+    }
 
 
 def test_fn_info_with_partial_of_partial():
@@ -29,7 +41,12 @@ def test_fn_info_with_partial_of_partial():
     quad = t.partial(double, 2)
     info = u.fn_info(quad)
 
-    assert info == {'name': 'mult', 'module': 'test_utils', 'varargs': (2, 2), 'kargs': {}}
+    assert info == {
+        'name': 'mult',
+        'module': 'test_utils',
+        'varargs': (2, 2),
+        'kargs': {}
+    }
 
 
 def test_fn_info_with_curry():
@@ -41,7 +58,14 @@ def test_fn_info_with_curry():
     assert double(2) == 4
     info = u.fn_info(double)
 
-    assert info == {'name': 'mult', 'module': 'test_utils', 'varargs': (), 'kargs': {'x': 2}}
+    assert info == {
+        'name': 'mult',
+        'module': 'test_utils',
+        'varargs': (),
+        'kargs': {
+            'x': 2
+        }
+    }
 
 
 def test_fn_info_with_multiple_curries():
@@ -57,7 +81,10 @@ def test_fn_info_with_multiple_curries():
         'name': 'mult',
         'module': 'test_utils',
         'varargs': (),
-        'kargs': {'a': 2, 'b': 2},
+        'kargs': {
+            'a': 2,
+            'b': 2
+        },
     }
 
 
@@ -81,7 +108,11 @@ def test_with_merged_defaults_with_non_dict_args():
         return a, baz, foo
 
     assert bar(5) == (5, None, {'a': 1, 'b': 2})
-    assert bar(5, baz='baz', foo={'c': 3}) == (5, 'baz', {'a': 1, 'b': 2, 'c': 3})
+    assert bar(5, baz='baz', foo={'c': 3}) == (5, 'baz', {
+        'a': 1,
+        'b': 2,
+        'c': 3
+    })
 
 
 def test_with_merged_defaults_with_args_splat():

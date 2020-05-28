@@ -86,7 +86,8 @@ def test_hashing_of_artifacts_and_proxies(repo):
     assert hash(original_proxy) == hash(original_artifact.value)
 
 
-def test_hashing_with_artifact_hasher_also_returns_iter_of_artifacts_preserves_hash(repo):
+def test_hashing_with_artifact_hasher_also_returns_iter_of_artifacts_preserves_hash(
+    repo):
     @p.provenance()
     def load_data():
         return [1, 2, 3]
@@ -103,24 +104,28 @@ def test_hashing_with_artifact_hasher_also_returns_iter_of_artifacts_preserves_h
     loaded_proxy = loaded_artifact.proxy()
 
     expected_proxy_ids = frozenset((original_artifact.id, data.artifact.id))
-    expected_artifact_ids = frozenset((original_artifact.id,))
+    expected_artifact_ids = frozenset((original_artifact.id, ))
 
-    original_proxy_hash, artifacts = hash(original_proxy, hasher=ah.artifact_hasher())
+    original_proxy_hash, artifacts = hash(original_proxy,
+                                          hasher=ah.artifact_hasher())
     ids = frozenset(a.id for a in artifacts)
     assert original_proxy_hash == hash(original_proxy)
     assert ids == expected_proxy_ids
 
-    original_artifact_hash, artifacts = hash(original_artifact, hasher=ah.artifact_hasher())
+    original_artifact_hash, artifacts = hash(original_artifact,
+                                             hasher=ah.artifact_hasher())
     ids = frozenset(a.id for a in artifacts)
     assert original_artifact_hash == hash(original_artifact)
     assert ids == expected_artifact_ids
 
-    loaded_artifact_hash, artifacts = hash(loaded_artifact, hasher=ah.artifact_hasher())
+    loaded_artifact_hash, artifacts = hash(loaded_artifact,
+                                           hasher=ah.artifact_hasher())
     ids = frozenset(a.id for a in artifacts)
     assert loaded_artifact_hash == hash(loaded_artifact)
     assert ids == expected_artifact_ids
 
-    loaded_proxy_hash, artifacts = hash(loaded_proxy, hasher=ah.artifact_hasher())
+    loaded_proxy_hash, artifacts = hash(loaded_proxy,
+                                        hasher=ah.artifact_hasher())
     ids = frozenset(a.id for a in artifacts)
     assert loaded_proxy_hash == hash(loaded_proxy)
     assert ids == expected_proxy_ids

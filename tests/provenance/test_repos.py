@@ -48,25 +48,31 @@ def test_inputs_json(db_session):
         'filename': 'foo-bar',
         'timestamp': now,
         'inc_x': {
-            'id': 'c74da9d379234901fe7a89e03fa800b0',  # md5
-            # "id": "2c33a362ebd51f830d0b245473ab6c1269674259",  # sha1
+            'id': 'c74da9d379234901fe7a89e03fa800b0',    # md5
+    # "id": "2c33a362ebd51f830d0b245473ab6c1269674259",  # sha1
             'name': 'test_repos.process_data_X',
             'type': 'ArtifactProxy',
         },
         'inc_y': {
-            'id': 'a1bd4d4ae1f33ae6379613618427f127',  # md5
-            # "id": "f9b1bb7a8aaf435fbf60b92cd88bf6c46604f702",  # sha1
+            'id': 'a1bd4d4ae1f33ae6379613618427f127',    # md5
+    # "id": "f9b1bb7a8aaf435fbf60b92cd88bf6c46604f702",  # sha1
             'name': 'test_repos.process_data_Y',
             'type': 'ArtifactProxy',
         },
     }
 
-    results = pipeline(filename='foo-bar', process_x_inc=5, process_y_inc=10, timestamp=now)
+    results = pipeline(filename='foo-bar',
+                       process_x_inc=5,
+                       process_y_inc=10,
+                       timestamp=now)
     res = results['res'].artifact
     inputs_json = r._inputs_json(res.inputs)
     assert inputs_json == expected_inputs_json
 
-    results = pipeline(filename='foo-bar', process_x_inc=5, process_y_inc=10, timestamp=now)
+    results = pipeline(filename='foo-bar',
+                       process_x_inc=5,
+                       process_y_inc=10,
+                       timestamp=now)
     res = results['res'].artifact
     inputs_json = r._inputs_json(res.inputs)
     assert inputs_json == expected_inputs_json
@@ -104,7 +110,8 @@ def test_basic_repo_ops(repo):
         repo.get_by_value_id(artifact.id)
 
 
-@pytest.mark.parametrize('artifact_class', [r.ArtifactProxy, r.CallableArtifactProxy])
+@pytest.mark.parametrize('artifact_class',
+                         [r.ArtifactProxy, r.CallableArtifactProxy])
 @pytest.mark.parametrize('copy_method', [copy.copy, copy.deepcopy])
 def test_copy_Proxies(repo, artifact_class, copy_method):
     class Artifact:
@@ -208,7 +215,10 @@ def test_permissions(atomic_repo):
 
 
 def test_chained_with_readonly():
-    read_repo = r.MemoryRepo([artifact_record(id='foo')], read=True, write=False, delete=False)
+    read_repo = r.MemoryRepo([artifact_record(id='foo')],
+                             read=True,
+                             write=False,
+                             delete=False)
     write_repo = r.MemoryRepo(read=True, write=True, delete=False)
     repos = [read_repo, write_repo]
     chained = r.ChainedRepo(repos)
@@ -231,9 +241,16 @@ def test_chained_read_through_write():
     foo = artifact_record(id='foo')
     read_repo = r.MemoryRepo([foo], read=True, write=False)
     repo_ahead = r.MemoryRepo(read=True, write=True, read_through_write=True)
-    read_through_write_repo = r.MemoryRepo(read=True, write=True, read_through_write=True)
-    no_read_through_write_repo = r.MemoryRepo(read=True, write=True, read_through_write=False)
-    repos = [no_read_through_write_repo, read_through_write_repo, read_repo, repo_ahead]
+    read_through_write_repo = r.MemoryRepo(read=True,
+                                           write=True,
+                                           read_through_write=True)
+    no_read_through_write_repo = r.MemoryRepo(read=True,
+                                              write=True,
+                                              read_through_write=False)
+    repos = [
+        no_read_through_write_repo, read_through_write_repo, read_repo,
+        repo_ahead
+    ]
     chained_repo = r.ChainedRepo(repos)
 
     assert 'foo' not in read_through_write_repo
@@ -250,7 +267,9 @@ def test_chained_read_through_write():
 def test_chained_writes_may_be_allowed_on_read_throughs_only():
     foo = artifact_record(id='foo')
     read_repo = r.MemoryRepo([foo], read=True, write=False)
-    read_through_write_only_repo = r.MemoryRepo(read=True, write=False, read_through_write=True)
+    read_through_write_only_repo = r.MemoryRepo(read=True,
+                                                write=False,
+                                                read_through_write=True)
     write_repo = r.MemoryRepo(read=True, write=True, read_through_write=False)
     repos = [write_repo, read_through_write_only_repo, read_repo]
     chained_repo = r.ChainedRepo(repos)
@@ -273,9 +292,12 @@ def test_db_is_automatically_created_and_migrated(disk_store):
     if sql_utils.database_exists(db_conn_str):
         sql_utils.drop_database(db_conn_str)
 
-    repo = r.PostgresRepo(
-        db_conn_str, disk_store, read=True, write=True, delete=True, create_db=True
-    )
+    repo = r.PostgresRepo(db_conn_str,
+                          disk_store,
+                          read=True,
+                          write=True,
+                          delete=True,
+                          create_db=True)
     p.set_default_repo(repo)
 
     @p.provenance()
@@ -291,7 +313,8 @@ def test_db_is_automatically_created_and_migrated(disk_store):
     sql_utils.drop_database(db_conn_str)
 
 
-def test_db_is_automatically_created_and_migrated_with_the_right_schema(disk_store):
+def test_db_is_automatically_created_and_migrated_with_the_right_schema(
+    disk_store):
     db_conn_str = 'postgresql://localhost/test_provenance_autocreate_schema'
     if sql_utils.database_exists(db_conn_str):
         sql_utils.drop_database(db_conn_str)
@@ -317,7 +340,13 @@ def test_db_is_automatically_created_and_migrated_with_the_right_schema(disk_sto
         res = pd.read_sql('select * from foobar.artifacts', s.connection())
 
     repo2 = r.PostgresRepo(
-        db_conn_str, disk_store, read=True, write=True, delete=True, create_db=True, schema='baz',
+        db_conn_str,
+        disk_store,
+        read=True,
+        write=True,
+        delete=True,
+        create_db=True,
+        schema='baz',
     )
 
     p.set_default_repo(repo2)

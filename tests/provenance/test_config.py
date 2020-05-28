@@ -33,8 +33,15 @@ def test_prototypes_are_merged():
             'read_through_write': False,
             'delete': True,
         },
-        'local_read_only': {'prototype': 'local_disk', 'write': False, 'delete': False},
-        'local_read_through_write': {'prototype': 'local_read_only', 'read_through_write': True},
+        'local_read_only': {
+            'prototype': 'local_disk',
+            'write': False,
+            'delete': False
+        },
+        'local_read_through_write': {
+            'prototype': 'local_read_only',
+            'read_through_write': True
+        },
     }
 
     stores = c.blobstores_from_config(config)
@@ -69,15 +76,21 @@ def test_blobstores_config_reading():
             'cachedir': '/tmp/foo',
             'basepath': 'mybucket/blobs',
             'delete': False,
-            's3_config': {'anon': True},
+            's3_config': {
+                'anon': True
+            },
         },
-        'chained': {'type': 'chained', 'stores': ['local_disk', 'mem', 'shared_s3']},
+        'chained': {
+            'type': 'chained',
+            'stores': ['local_disk', 'mem', 'shared_s3']
+        },
     }
 
     stores = c.blobstores_from_config(config)
     chained = stores['chained']
     assert isinstance(chained, bs.ChainedStore)
-    assert [type(s) for s in chained.stores] == [bs.DiskStore, bs.MemoryStore, bs.S3Store]
+    assert [type(s) for s in chained.stores
+            ] == [bs.DiskStore, bs.MemoryStore, bs.S3Store]
 
 
 def test_from_config():
@@ -91,7 +104,13 @@ def test_from_config():
                 'delete': True,
             }
         },
-        'artifact_repos': {'db': {'type': 'postgres', 'db': ct.db_conn_str(), 'store': 'mem'}},
+        'artifact_repos': {
+            'db': {
+                'type': 'postgres',
+                'db': ct.db_conn_str(),
+                'store': 'mem'
+            }
+        },
     }
     objs = c.from_config(config)
     repo = objs['repos']['db']

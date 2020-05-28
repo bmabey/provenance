@@ -73,7 +73,8 @@ def fn_info(f):
     info['read_only'] = metadata['read_only']
     if info['composite']:
         if info['archive_file']:
-            raise NotImplementedError("Using 'composite' and 'archive_file' is not supported.")
+            raise NotImplementedError(
+                "Using 'composite' and 'archive_file' is not supported.")
         info['serializer'] = metadata['serializer'] or {}
         info['load_kwargs'] = metadata['load_kwargs'] or {}
         info['dump_kwargs'] = metadata['dump_kwargs'] or {}
@@ -85,11 +86,17 @@ def fn_info(f):
     elif info['archive_file']:
         serializer = metadata['serializer'] or 'file'
         if serializer != 'file':
-            raise ValueError("With 'archive_file' set True the only valid 'serializer' is 'file'")
+            raise ValueError(
+                "With 'archive_file' set True the only valid 'serializer' is 'file'"
+            )
         if metadata.get('dump_kwargs') is not None:
-            raise ValueError("With 'archive_file' set True you may not specify any dump_kwargs.")
+            raise ValueError(
+                "With 'archive_file' set True you may not specify any dump_kwargs."
+            )
         if metadata.get('load_kwargs') is not None:
-            raise ValueError("With 'archive_file' set True you may not specify any load_kwargs.")
+            raise ValueError(
+                "With 'archive_file' set True you may not specify any load_kwargs."
+            )
         info['serializer'] = 'file'
         info['load_kwargs'] = metadata['load_kwargs'] or {}
         info['dump_kwargs'] = metadata['dump_kwargs'] or {
@@ -101,12 +108,13 @@ def fn_info(f):
         info['serializer'] = metadata.get('serializer', 'auto') or 'auto'
         info['load_kwargs'] = metadata.get('load_kwargs', None)
         info['dump_kwargs'] = metadata.get('dump_kwargs', None)
-        valid_serializer = info['serializer'] == 'auto' or info['serializer'] in s.serializers
+        valid_serializer = info['serializer'] == 'auto' or info[
+            'serializer'] in s.serializers
 
     if not valid_serializer:
         msg = 'Invalid serializer option "{}" for artifact "{}", available serialziers: {} '.format(
-            info['serializer'], info['identifiers']['name'], tuple(s.serializers.keys())
-        )
+            info['serializer'], info['identifiers']['name'],
+            tuple(s.serializers.keys()))
         raise ValueError(msg)
 
     return info
@@ -154,9 +162,10 @@ def hash_inputs(inputs, check_mutations=False, func_info=None):
 
 
 def create_id(input_hashes, input_hash_fn, name, version):
-    return t.thread_first(
-        input_hashes, input_hash_fn, (t.merge, {'name': name, 'version': version}), hash
-    )
+    return t.thread_first(input_hashes, input_hash_fn, (t.merge, {
+        'name': name,
+        'version': version
+    }), hash)
 
 
 @t.curry
@@ -196,19 +205,17 @@ def composite_artifact(
     try:
         artifact = repo.get_by_id(id)
     except KeyError:
-        record = ArtifactRecord(
-            id=id,
-            value_id=value_id,
-            value=value,
-            input_artifact_ids=input_artifact_ids,
-            value_id_duration=value_id_duration,
-            compute_duration=compute_duration,
-            hash_duration=hash_duration,
-            computed_at=computed_at,
-            inputs=inputs,
-            run_info=_run_info,
-            **info
-        )
+        record = ArtifactRecord(id=id,
+                                value_id=value_id,
+                                value=value,
+                                input_artifact_ids=input_artifact_ids,
+                                value_id_duration=value_id_duration,
+                                compute_duration=compute_duration,
+                                hash_duration=hash_duration,
+                                computed_at=computed_at,
+                                inputs=inputs,
+                                run_info=_run_info,
+                                **info)
         if read_only:
             artifact = repos._artifact_from_record(repo, record)
         else:
@@ -243,8 +250,8 @@ def _archive_file_hash(filename, preserve_file_ext):
         filename = str(filename)
     if not os.path.exists(filename):
         raise FileNotFoundError(
-            "Unable to archive file, {}, because it doesn't exist!".format(filename)
-        )
+            "Unable to archive file, {}, because it doesn't exist!".format(
+                filename))
     # TODO: figure out best place to put the hash_name config and use in both cases
     value_id = file_hash(filename)
     if preserve_file_ext:
@@ -307,15 +314,16 @@ def provenance_wrapper(repo, f):
 
         value_id = None
         filename = None
-        archive_file_helper = archive_file and '_archive_file_filename' in raw_inputs['kargs']
+        archive_file_helper = archive_file and '_archive_file_filename' in raw_inputs[
+            'kargs']
         if archive_file_helper:
             filename = raw_inputs['kargs']['_archive_file_filename']
-            value_id = _archive_file_hash(filename, func_info['preserve_file_ext'])
+            value_id = _archive_file_hash(filename,
+                                          func_info['preserve_file_ext'])
             inputs['filehash'] = value_id
 
         input_hashes, input_artifact_ids = hash_inputs(
-            inputs, repos.get_check_mutations(), func_info
-        )
+            inputs, repos.get_check_mutations(), func_info)
 
         id = create_id(input_hashes, **func_info['identifiers'])
         hash_duration = time.time() - start_hash_time
@@ -351,8 +359,8 @@ def provenance_wrapper(repo, f):
                     if _hash != varargs[i]:
                         modified_inputs.append('varargs[{}]'.format(i))
                 msg = 'The {}.{} function modified arguments: ({})'.format(
-                    func_info['module'], func_info['name'], ','.join(modified_inputs)
-                )
+                    func_info['module'], func_info['name'],
+                    ','.join(modified_inputs))
                 raise ImpureFunctionError(msg)
 
             if artifact_info_['composite']:
@@ -382,7 +390,8 @@ def provenance_wrapper(repo, f):
             if archive_file:
                 if not archive_file_helper:
                     filename = value
-                    value_id = _archive_file_hash(filename, func_info['preserve_file_ext'])
+                    value_id = _archive_file_hash(
+                        filename, func_info['preserve_file_ext'])
                 value = ArchivedFile(value_id, filename, in_repo=False)
             else:
                 value_id = hash(value)
@@ -396,19 +405,17 @@ def provenance_wrapper(repo, f):
                     artifact = None
 
             if artifact is None:
-                record = ArtifactRecord(
-                    id=id,
-                    value_id=value_id,
-                    value=value,
-                    input_artifact_ids=input_artifact_ids,
-                    value_id_duration=value_id_duration,
-                    compute_duration=compute_duration,
-                    hash_duration=hash_duration,
-                    computed_at=computed_at,
-                    run_info=_run_info,
-                    inputs=inputs,
-                    **artifact_info_
-                )
+                record = ArtifactRecord(id=id,
+                                        value_id=value_id,
+                                        value=value,
+                                        input_artifact_ids=input_artifact_ids,
+                                        value_id_duration=value_id_duration,
+                                        compute_duration=compute_duration,
+                                        hash_duration=hash_duration,
+                                        computed_at=computed_at,
+                                        run_info=_run_info,
+                                        inputs=inputs,
+                                        **artifact_info_)
                 if read_only:
                     artifact = repos._artifact_from_record(r, record)
                 else:
@@ -418,7 +425,8 @@ def provenance_wrapper(repo, f):
                 # mark the file as in the repo (yucky, I know)
                 artifact.value.in_repo = True
 
-        elif archive_file_helper and func_info.get('delete_original_file', False):
+        elif archive_file_helper and func_info.get('delete_original_file',
+                                                   False):
             # if we hit an artifact with archive_file we may still need to clean up the
             # referenced file. This is normally taken care of when the file is 'serialzied'
             # (see file_dump), but in the case of an artifact hit this would never happen.
@@ -468,7 +476,6 @@ def ensure_proxies(*parameters):
     This is useful to use on functions where you want to make sure artifacts
     are being passed in so lineage can be tracked.
     """
-
     def decorator(func):
         base_fn = _base_fn(func)
         extract_args = utils.args_extractor(base_fn, merge_defaults=True)
@@ -478,13 +485,16 @@ def ensure_proxies(*parameters):
             _varargs, argsd = extract_args(args, kargs)
             not_valid = None
             if len(parameters) == 0:
-                not_valid = [p for p, a in argsd.items() if not repos.is_proxy(a)]
+                not_valid = [
+                    p for p, a in argsd.items() if not repos.is_proxy(a)
+                ]
             else:
-                not_valid = [p for p in parameters if not repos.is_proxy(argsd[p])]
+                not_valid = [
+                    p for p in parameters if not repos.is_proxy(argsd[p])
+                ]
             if len(not_valid) > 0:
                 msg = 'Arguments must be `ArtifactProxy`s but were not: [{}]'.format(
-                    ', '.join(not_valid)
-                )
+                    ', '.join(not_valid))
                 raise ValueError(msg)
 
             return func(*args, **kargs)
@@ -722,7 +732,8 @@ class ArchivedFile(object):
 
     def __repr__(self):
         if self.original_filename:
-            return '<ArchivedFile {}, {} >'.format(self.blob_id, self.original_filename)
+            return '<ArchivedFile {}, {} >'.format(self.blob_id,
+                                                   self.original_filename)
         else:
             return '<ArchivedFile {} >'.format(self.blob_id)
 
@@ -739,9 +750,11 @@ def file_load(id):
 s.register_serializer('file', file_dump, file_load)
 
 
-def archive_file(
-    filename, name=None, delete_original=False, custom_fields=None, preserve_ext=False
-):
+def archive_file(filename,
+                 name=None,
+                 delete_original=False,
+                 custom_fields=None,
+                 preserve_ext=False):
     """(beta) Copies or moves the provided filename into the Artifact Repository so it can
     be used as an ``ArtifactProxy`` to inputs of other functions.
 
@@ -785,7 +798,8 @@ def archive_file(
 
 def provenance_set(set_labels=None, initial_set=None, set_labels_fn=None):
     if set_labels and set_labels_fn:
-        raise ValueError('You cannot provide both set_labels and set_labels_fn.')
+        raise ValueError(
+            'You cannot provide both set_labels and set_labels_fn.')
 
     def make_wrapper(f):
         if set_labels_fn:
@@ -803,7 +817,8 @@ def provenance_set(set_labels=None, initial_set=None, set_labels_fn=None):
             else:
                 labels = set_labels
 
-            with repos.capture_set(labels=labels, initial_set=initial_set) as result:
+            with repos.capture_set(labels=labels,
+                                   initial_set=initial_set) as result:
                 f(*fargs, **fkargs)
             return result[0]
 

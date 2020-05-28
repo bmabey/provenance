@@ -34,7 +34,9 @@ def gen_age():
     return random.randint(18, 100)
 
 
-street_names = ['Maple St', 'Corner Ave', 'West Helm Lp', '4th St', 'Main St', 'Center St']
+street_names = [
+    'Maple St', 'Corner Ave', 'West Helm Lp', '4th St', 'Main St', 'Center St'
+]
 
 
 def gen_address():
@@ -72,9 +74,9 @@ def save_entry(id, name, age, address, matrix):
             name=id + '/demographic',
             delete_original=True,
         )
-        p.archive_file(
-            os.path.join(directory, 'matrix.csv'), name=id + '/matrix', delete_original=True
-        )
+        p.archive_file(os.path.join(directory, 'matrix.csv'),
+                       name=id + '/matrix',
+                       delete_original=True)
 
     write_entry()
 

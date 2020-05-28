@@ -12,6 +12,8 @@ subpackages = {
     'vis': ['graphviz', 'frozendict'],
 }
 
+DESCRIPTION = 'Provenance and caching library for functions, built for creating lightweight machine learning pipelines.'
+
 setup(
     name='provenance',
     version=versioneer.get_version(),
@@ -20,8 +22,9 @@ setup(
     install_requires=[open('requirements.txt').read().strip().split('\n')],
     extras_require=subpackages,
     include_package_data=True,
-    description='Provenance and caching library for functions, built for creating lightweight machine learning pipelines.',
-    long_description=(open('README.rst').read() if exists('README.rst') else ''),
+    description=DESCRIPTION,
+    long_description=(open('README.rst').read()
+                      if exists('README.rst') else ''),
     author='Ben Mabey',
     author_email='ben@benmabey.com',
     url='http://github.com/bmabey/provenance',
