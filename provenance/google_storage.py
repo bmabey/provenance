@@ -11,6 +11,7 @@ from . import blobstores as bs
 
 
 def retry(f, max_attempts=2):
+
     @bfu.wraps(f)
     def with_retry(store, *args, **kargs):
         actual_attempts = 0
@@ -28,6 +29,7 @@ def retry(f, max_attempts=2):
 
 
 class GSStore(bs.RemoteStore):
+
     def __init__(
         self,
         cachedir,

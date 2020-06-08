@@ -4,9 +4,11 @@ import toolz as t
 
 
 class PermissionError(Exception):
+
     def __init__(self, action, store, permission):
         message = 'A `{}` operation was attempted on {} and {} is set to `False`!'.format(
-            action, store, permission)
+            action, store, permission
+        )
         self.action = action
         self.store = store
         self.permission = permission
@@ -14,18 +16,18 @@ class PermissionError(Exception):
 
 
 class KeyExistsError(Exception):
+
     def __init__(self, key, store):
-        msg = 'The key {} is already present in {}, you can not overwrite it!'.format(
-            key, store)
+        msg = 'The key {} is already present in {}, you can not overwrite it!'.format(key, store)
         self.key = key
         self.store = store
         Exception.__init__(self, msg)
 
 
 class InconsistentKeyError(Exception):
+
     def __init__(self, key, store, value):
-        msg = 'The key {} already represents a different value in {}'.format(
-            key, store)
+        msg = 'The key {} already represents a different value in {}'.format(key, store)
         self.key = key
         self.store = store
         self.value = value
@@ -66,8 +68,7 @@ def ensure_delete(obj, id=None, check_contains=True):
 def ensure_put(obj, id, read_through=None, check_contains=True):
     if read_through:
         if not obj._read_through_write:
-            raise PermissionError('read_through_put', obj,
-                                  'read_through_write')
+            raise PermissionError('read_through_put', obj, 'read_through_write')
     elif not obj._write:
         raise PermissionError('put', obj, 'write')
     if check_contains and id in obj:
@@ -85,13 +86,7 @@ def chained_contains(chained, id, contains=op.contains):
     return False
 
 
-def chained_put(chained,
-                id,
-                value,
-                put=None,
-                overwrite=False,
-                contains=op.contains,
-                **kargs):
+def chained_put(chained, id, value, put=None, overwrite=False, contains=op.contains, **kargs):
     stores_with_write = [s for s in chained.stores if s._write]
     if len(stores_with_write) == 0:
         raise PermissionError('put', chained, 'write')

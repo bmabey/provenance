@@ -23,8 +23,7 @@ setup(
     extras_require=subpackages,
     include_package_data=True,
     description=DESCRIPTION,
-    long_description=(open('README.rst').read()
-                      if exists('README.rst') else ''),
+    long_description=(open('README.rst').read() if exists('README.rst') else ''),
     author='Ben Mabey',
     author_email='ben@benmabey.com',
     url='http://github.com/bmabey/provenance',

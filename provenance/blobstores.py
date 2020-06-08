@@ -12,6 +12,7 @@ from .serializers import DEFAULT_VALUE_SERIALIZER
 
 
 class BaseBlobStore:
+
     def __init__(
         self,
         read=True,
@@ -26,22 +27,15 @@ class BaseBlobStore:
         self._delete = delete
         self._on_duplicate_key = on_duplicate_key
 
-        valid_on_duplicate_keys = {
-            'skip', 'overwrite', 'check_collision', 'raise'
-        }
+        valid_on_duplicate_keys = {'skip', 'overwrite', 'check_collision', 'raise'}
         if self._on_duplicate_key not in valid_on_duplicate_keys:
-            msg = 'on_duplicate_key must be one of {}'.format(
-                valid_on_duplicate_keys)
+            msg = 'on_duplicate_key must be one of {}'.format(valid_on_duplicate_keys)
             raise RuntimeError(msg)
 
     def __getitem__(self, id, *args, **kargs):
         return self.get(id, *args, **kargs)
 
-    def put(self,
-            id,
-            value,
-            serializer=DEFAULT_VALUE_SERIALIZER,
-            read_through=False):
+    def put(self, id, value, serializer=DEFAULT_VALUE_SERIALIZER, read_through=False):
         method = getattr(self, '_put_' + self._on_duplicate_key)
         return method(id, value, serializer, read_through)
 
@@ -69,6 +63,7 @@ class BaseBlobStore:
 
 
 class MemoryStore(BaseBlobStore):
+
     def __init__(
         self,
         values=None,
@@ -131,6 +126,7 @@ def _abspath(path):
 
 
 class DiskStore(BaseBlobStore):
+
     def __init__(
         self,
         cachedir,
@@ -173,6 +169,7 @@ class DiskStore(BaseBlobStore):
 
 
 class RemoteStore(BaseBlobStore):
+
     def __init__(
         self,
         cachedir,
@@ -268,6 +265,7 @@ class RemoteStore(BaseBlobStore):
 
 
 class S3Store(RemoteStore):
+
     def __init__(
         self,
         cachedir,
@@ -310,8 +308,7 @@ class S3Store(RemoteStore):
         elif s3_config is not None:
             self.s3fs = S3FileSystem(**s3_config)
         else:
-            raise ValueError(
-                'You must provide either s3_config or s3fs for a S3Store')
+            raise ValueError('You must provide either s3_config or s3fs for a S3Store')
 
     def _exists(self, path):
         return self.s3fs.exists(path)
@@ -327,6 +324,7 @@ class S3Store(RemoteStore):
 
 
 class ChainedStore(BaseBlobStore):
+
     def __init__(
         self,
         stores,
@@ -352,13 +350,10 @@ class ChainedStore(BaseBlobStore):
         return cs.chained_filename(self, id)
 
     def _put_overwrite(self, id, value, serializer, read_through):
-        return cs.chained_put(self,
-                              id,
-                              value,
-                              overwrite=True,
-                              serializer=serializer)
+        return cs.chained_put(self, id, value, overwrite=True, serializer=serializer)
 
     def get(self, id, serializer=DEFAULT_VALUE_SERIALIZER, **kargs):
+
         def get(store, id):
             return store.get(id, serializer=serializer, **kargs)
 

@@ -9,6 +9,7 @@ Pickler = cloudpickle.CloudPickler
 
 
 class DependencyWalker(Pickler):
+
     def __init__(self):
         self.stream = io.BytesIO()
         self.dependents = []

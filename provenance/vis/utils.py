@@ -15,10 +15,7 @@ def artifact_id(artifact, length=7):
 
 
 def artifact_record(artifact, elide_len=30):
-    return '|'.join([
-        '<f0>' + artifact_id(artifact),
-        '<f1>' + elide(artifact.value, elide_len)
-    ])
+    return '|'.join(['<f0>' + artifact_id(artifact), '<f1>' + elide(artifact.value, elide_len)])
 
 
 def param_node_id(child_artifact, name, val):
@@ -57,6 +54,7 @@ def dicts_to_digraph(dicts):
 
 
 class DigraphDicts:
+
     def __init__(self):
         self.set = set()
 
@@ -79,9 +77,9 @@ def _viz_artifact(artifact, g):
     function_id = 'fn_' + artifact.id
     fn_qalified_name = '.'.join([artifact.fn_module, artifact.fn_name])
     fn_name = artifact.fn_name
-    fn_params = '{fn}({params})'.format(fn=fn_qalified_name,
-                                        params=','.join(
-                                            artifact.inputs['kargs'].keys()))
+    fn_params = '{fn}({params})'.format(
+        fn=fn_qalified_name, params=','.join(artifact.inputs['kargs'].keys())
+    )
 
     g.node(function_id, fn_name, shape='circle', tooltip=fn_params)
     g.edge(function_id, artifact.id)

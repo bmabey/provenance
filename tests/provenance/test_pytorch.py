@@ -14,6 +14,7 @@ class TwoLayerNet(torch.nn.Module):
     simplest, non-trivial custom NN we can use for testing provenance.
     See [here](https://pytorch.org/tutorials/beginner/examples_nn/two_layer_net_module.html#sphx-glr-beginner-examples-nn-two-layer-net-module-py)
     """
+
     def __init__(self, D_in, H, D_out):
         """
         In the constructor we instantiate two nn.Linear modules and assign them

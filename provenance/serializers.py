@@ -20,7 +20,8 @@ def cloudpickle_load(filename, **kwargs):
 
 Serializer = namedtuple(
     'Serializer',
-    'name, dump, load, content_type, content_encoding, content_disposition')
+    'name, dump, load, content_type, content_encoding, content_disposition',
+)
 
 
 def joblib_dump(obj, filename, compress=2, **kwargs):
@@ -55,8 +56,9 @@ def register_serializer(
     content_disposition=None,
     classes=None,
 ):
-    serializers[name] = Serializer(name, dump, load, content_type,
-                                   content_encoding, content_disposition)
+    serializers[name] = Serializer(
+        name, dump, load, content_type, content_encoding, content_disposition
+    )
     if classes is None:
         return
     for cls in classes:
@@ -91,10 +93,9 @@ if _pandas_and_parquet_present():
     def pd_df_parquet_load(filename, **kwargs):
         return pd.read_parquet(filename, **kwargs)
 
-    register_serializer('pd_df_parquet',
-                        pd_df_parquet_dump,
-                        pd_df_parquet_load,
-                        classes=[pd.DataFrame])
+    register_serializer(
+        'pd_df_parquet', pd_df_parquet_dump, pd_df_parquet_load, classes=[pd.DataFrame]
+    )
 
     def pd_series_parquet_dump(series, filename, **kwargs):
         if series.name is None:
@@ -108,10 +109,12 @@ if _pandas_and_parquet_present():
             series.name = None
         return series
 
-    register_serializer('pd_series_parquet',
-                        pd_series_parquet_dump,
-                        pd_series_parquet_load,
-                        classes=[pd.Series])
+    register_serializer(
+        'pd_series_parquet',
+        pd_series_parquet_dump,
+        pd_series_parquet_load,
+        classes=[pd.Series],
+    )
 
 
 def _pytorch_present():
@@ -131,10 +134,12 @@ if _pytorch_present():
     def pytorch_model_load(filename, **kwargs):
         return torch.load(filename)
 
-    register_serializer('pytorch_model',
-                        pytorch_model_dump,
-                        pytorch_model_load,
-                        classes=[torch.nn.Module])
+    register_serializer(
+        'pytorch_model',
+        pytorch_model_dump,
+        pytorch_model_load,
+        classes=[torch.nn.Module],
+    )
 
 
 @t.memoize(key=lambda *args: hash(args))
@@ -151,8 +156,7 @@ def partial_serializer(serializer_name, dump_kwargs, load_kwargs):
 
 
 def serializer(artifact):
-    return partial_serializer(artifact.serializer, artifact.dump_kwargs,
-                              artifact.load_kwargs)
+    return partial_serializer(artifact.serializer, artifact.dump_kwargs, artifact.load_kwargs)
 
 
 DEFAULT_VALUE_SERIALIZER = serializers['joblib']

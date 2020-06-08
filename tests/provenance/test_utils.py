@@ -4,19 +4,16 @@ import provenance.utils as u
 
 
 def test_fn_info_with_regular_function():
+
     def inc(x):
         return x + 1
 
     info = u.fn_info(inc)
-    assert info == {
-        'name': 'inc',
-        'module': 'test_utils',
-        'varargs': (),
-        'kargs': {}
-    }
+    assert info == {'name': 'inc', 'module': 'test_utils', 'varargs': (), 'kargs': {}}
 
 
 def test_fn_info_with_partial():
+
     def mult(x, y):
         return x * y
 
@@ -29,11 +26,12 @@ def test_fn_info_with_partial():
         'varargs': (),
         'kargs': {
             'x': 2
-        }
+        },
     }
 
 
 def test_fn_info_with_partial_of_partial():
+
     def mult(*args):
         return t.reduce(lambda a, b: a * b, args)
 
@@ -45,11 +43,12 @@ def test_fn_info_with_partial_of_partial():
         'name': 'mult',
         'module': 'test_utils',
         'varargs': (2, 2),
-        'kargs': {}
+        'kargs': {},
     }
 
 
 def test_fn_info_with_curry():
+
     @t.curry
     def mult(x, y):
         return x * y
@@ -64,11 +63,12 @@ def test_fn_info_with_curry():
         'varargs': (),
         'kargs': {
             'x': 2
-        }
+        },
     }
 
 
 def test_fn_info_with_multiple_curries():
+
     @t.curry
     def mult(a, b, c):
         return a * b * c
@@ -108,11 +108,7 @@ def test_with_merged_defaults_with_non_dict_args():
         return a, baz, foo
 
     assert bar(5) == (5, None, {'a': 1, 'b': 2})
-    assert bar(5, baz='baz', foo={'c': 3}) == (5, 'baz', {
-        'a': 1,
-        'b': 2,
-        'c': 3
-    })
+    assert bar(5, baz='baz', foo={'c': 3}) == (5, 'baz', {'a': 1, 'b': 2, 'c': 3})
 
 
 def test_with_merged_defaults_with_args_splat():

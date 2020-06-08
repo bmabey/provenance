@@ -14,8 +14,7 @@ def full_config(configs, base_config):
     if 'type' in base_config:
         return base_config
     prototype = full_config(configs, configs[base_config['prototype']])
-    return t.thread_first(prototype, (t.merge, base_config),
-                          (t.dissoc, 'prototype'))
+    return t.thread_first(prototype, (t.merge, base_config), (t.dissoc, 'prototype'))
 
 
 def merge_prototypes(config):
@@ -28,7 +27,9 @@ def atomic_item_from_config(config, type_dict, item_plural, name=None):
     if stype not in type_dict:
         raise Exception(
             '{} may only be created of types: {}, you had {}'.format(
-                item_plural, tuple(type_dict.keys()), stype))
+                item_plural, tuple(type_dict.keys()), stype
+            )
+        )
     cls = type_dict[stype]
     kargs = t.dissoc(config, 'type')
     return cls(**kargs)
@@ -71,8 +72,7 @@ except ImportError as e:
 
     BLOBSTORE_TYPES['gs'] = GSStore
 
-blobstore_from_config = atomic_item_from_config(type_dict=BLOBSTORE_TYPES,
-                                                item_plural='Blobstores')
+blobstore_from_config = atomic_item_from_config(type_dict=BLOBSTORE_TYPES, item_plural='Blobstores')
 
 REPO_TYPES = {
     'postgres': r.PostgresRepo,
@@ -80,12 +80,10 @@ REPO_TYPES = {
     'chained': r.ChainedRepo,
 }
 
-repo_from_config = atomic_item_from_config(type_dict=REPO_TYPES,
-                                           item_plural='Artifact Repos')
+repo_from_config = atomic_item_from_config(type_dict=REPO_TYPES, item_plural='Artifact Repos')
 
 
-def items_from_config(config, atomic_from_config, items_name, item_type,
-                      silence_warnings):
+def items_from_config(config, atomic_from_config, items_name, item_type, silence_warnings):
     config = merge_prototypes(copy.deepcopy(config))
 
     atomic_stores = {}
@@ -142,11 +140,11 @@ def items_from_config(config, atomic_from_config, items_name, item_type,
 
 
 def blobstores_from_config(config, silence_warnings=False):
-    return items_from_config(config, blobstore_from_config, 'stores',
-                             'blobstore', silence_warnings)
+    return items_from_config(config, blobstore_from_config, 'stores', 'blobstore', silence_warnings)
 
 
 def repos_from_config(config, blobstores, silence_warnings=False):
+
     def from_config(atomic_config, name):
         if 'store' in atomic_config:
             if not atomic_config['store'] in blobstores:
@@ -161,15 +159,13 @@ def repos_from_config(config, blobstores, silence_warnings=False):
             atomic_config['store'] = blobstores[atomic_config['store']]
         return repo_from_config(atomic_config)
 
-    return items_from_config(config, from_config, 'repos', 'repo',
-                             silence_warnings)
+    return items_from_config(config, from_config, 'repos', 'repo', silence_warnings)
 
 
 def from_config(config):
     silence_warnings = config.get('silence_warnings', False)
     blobstores = blobstores_from_config(config['blobstores'], silence_warnings)
-    repos = repos_from_config(config['artifact_repos'], blobstores,
-                              silence_warnings)
+    repos = repos_from_config(config['artifact_repos'], blobstores, silence_warnings)
     return {'blobstores': blobstores, 'repos': repos}
 
 

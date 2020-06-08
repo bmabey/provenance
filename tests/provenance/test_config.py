@@ -25,14 +25,15 @@ def test_atomic_blobstore_config_reading():
 
 def test_prototypes_are_merged():
     config = {
-        'local_disk': {
-            'type': 'disk',
-            'cachedir': '.artifacts/',
-            'read': True,
-            'write': True,
-            'read_through_write': False,
-            'delete': True,
-        },
+        'local_disk':
+            {
+                'type': 'disk',
+                'cachedir': '.artifacts/',
+                'read': True,
+                'write': True,
+                'read_through_write': False,
+                'delete': True,
+            },
         'local_read_only': {
             'prototype': 'local_disk',
             'write': False,
@@ -40,7 +41,7 @@ def test_prototypes_are_merged():
         },
         'local_read_through_write': {
             'prototype': 'local_read_only',
-            'read_through_write': True
+            'read_through_write': True,
         },
     }
 
@@ -56,30 +57,33 @@ def test_prototypes_are_merged():
 
 def test_blobstores_config_reading():
     config = {
-        'local_disk': {
-            'type': 'disk',
-            'cachedir': '.artifacts/',
-            'read': True,
-            'write': True,
-            'read_through_write': False,
-            'delete': True,
-        },
-        'mem': {
-            'type': 'memory',
-            'read': True,
-            'write': True,
-            'read_through_write': False,
-            'delete': True,
-        },
-        'shared_s3': {
-            'type': 's3',
-            'cachedir': '/tmp/foo',
-            'basepath': 'mybucket/blobs',
-            'delete': False,
-            's3_config': {
-                'anon': True
+        'local_disk':
+            {
+                'type': 'disk',
+                'cachedir': '.artifacts/',
+                'read': True,
+                'write': True,
+                'read_through_write': False,
+                'delete': True,
             },
-        },
+        'mem':
+            {
+                'type': 'memory',
+                'read': True,
+                'write': True,
+                'read_through_write': False,
+                'delete': True,
+            },
+        'shared_s3':
+            {
+                'type': 's3',
+                'cachedir': '/tmp/foo',
+                'basepath': 'mybucket/blobs',
+                'delete': False,
+                's3_config': {
+                    'anon': True
+                },
+            },
         'chained': {
             'type': 'chained',
             'stores': ['local_disk', 'mem', 'shared_s3']
@@ -89,21 +93,26 @@ def test_blobstores_config_reading():
     stores = c.blobstores_from_config(config)
     chained = stores['chained']
     assert isinstance(chained, bs.ChainedStore)
-    assert [type(s) for s in chained.stores
-            ] == [bs.DiskStore, bs.MemoryStore, bs.S3Store]
+    assert [type(s) for s in chained.stores] == [
+        bs.DiskStore,
+        bs.MemoryStore,
+        bs.S3Store,
+    ]
 
 
 def test_from_config():
     config = {
-        'blobstores': {
-            'mem': {
-                'type': 'memory',
-                'read': True,
-                'write': True,
-                'read_through_write': False,
-                'delete': True,
-            }
-        },
+        'blobstores':
+            {
+                'mem':
+                    {
+                        'type': 'memory',
+                        'read': True,
+                        'write': True,
+                        'read_through_write': False,
+                        'delete': True,
+                    }
+            },
         'artifact_repos': {
             'db': {
                 'type': 'postgres',

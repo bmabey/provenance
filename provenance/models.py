@@ -127,11 +127,7 @@ class ArtifactSet(Base):
 
     @memoized_property
     def props(self):
-        return {
-            'id': self.set_id,
-            'labels': self.labels,
-            'created_at': self.created_at
-        }
+        return {'id': self.set_id, 'labels': self.labels, 'created_at': self.created_at}
 
     def __repr__(self):
         return '<ArtifactSet %r, %r>' % (self.set_id, self.labels)
@@ -142,7 +138,7 @@ class ArtifactSetMember(Base):
 
     set_id = sa.Column(
         pg.VARCHAR(SHA1_LENGTH),
-        primary_key=True    # sa.ForeignKey("artifact_sets.set_id"),
+        primary_key=True,    # sa.ForeignKey("artifact_sets.set_id"),
     )
     artifact_id = sa.Column(
         pg.VARCHAR(SHA1_LENGTH),

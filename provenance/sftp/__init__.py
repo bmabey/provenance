@@ -17,6 +17,7 @@ def _ssh_client(ssh_config):
 
 
 class SFTPStore(bs.RemoteStore):
+
     def __init__(
         self,
         cachedir,
@@ -59,8 +60,7 @@ class SFTPStore(bs.RemoteStore):
         if ssh_config is not None:
             self.ssh_client = _ssh_client(ssh_config)
         if self.ssh_client is not None:
-            sftp_client = paramiko.SFTPClient.from_transport(
-                self.ssh_client._transport)
+            sftp_client = paramiko.SFTPClient.from_transport(self.ssh_client._transport)
         if sftp_client is not None:
             self.sftp_client = sftp_client
         else:

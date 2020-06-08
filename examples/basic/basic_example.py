@@ -2,31 +2,37 @@
 
 import provenance as p
 
-p.load_config({
-    'blobstores': {
-        'disk': {
-            'type': 'disk',
-            'cachedir': 'artifacts',
-            'read': True,
-            'write': True,
-            'read_through_write': False,
-            'delete': True,
-        }
-    },
-    'artifact_repos': {
-        'local': {
-            'type': 'postgres',
-            'db': 'postgresql://localhost/provenance-basic-example',
-            'store': 'disk',
-            'read': True,
-            'write': True,
-            'create_db': True,
-            'read_through_write': False,
-            'delete': True,
-        }
-    },
-    'default_repo': 'local',
-})
+p.load_config(
+    {
+        'blobstores':
+            {
+                'disk':
+                    {
+                        'type': 'disk',
+                        'cachedir': 'artifacts',
+                        'read': True,
+                        'write': True,
+                        'read_through_write': False,
+                        'delete': True,
+                    }
+            },
+        'artifact_repos':
+            {
+                'local':
+                    {
+                        'type': 'postgres',
+                        'db': 'postgresql://localhost/provenance-basic-example',
+                        'store': 'disk',
+                        'read': True,
+                        'write': True,
+                        'create_db': True,
+                        'read_through_write': False,
+                        'delete': True,
+                    }
+            },
+        'default_repo': 'local',
+    }
+)
 
 
 @p.provenance()

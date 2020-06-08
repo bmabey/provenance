@@ -43,10 +43,7 @@ def test_memory_blobstore(key, obj):
 
 @given(sha1, builtin_data)
 def test_memory_blobstore_raises(key, obj):
-    store = bs.MemoryStore(read=True,
-                           write=True,
-                           delete=True,
-                           on_duplicate_key='raise')
+    store = bs.MemoryStore(read=True, write=True, delete=True, on_duplicate_key='raise')
     assert_store_basic_ops(store, key, obj)
 
 
@@ -146,10 +143,7 @@ def test_chained_storage_with_disk_and_s3_sharing_cachedir(s3fs):
 
 
 def test_chained_with_readonly():
-    read_store = bs.MemoryStore({'foo': 42},
-                                read=True,
-                                write=False,
-                                delete=False)
+    read_store = bs.MemoryStore({'foo': 42}, read=True, write=False, delete=False)
     write_store = bs.MemoryStore(read=True, write=True, delete=False)
     stores = [read_store, write_store]
     chained_store = bs.ChainedStore(stores)
@@ -166,18 +160,14 @@ def test_chained_with_readonly():
 
 def test_chained_read_through_write():
     read_store = bs.MemoryStore({'foo': 42}, read=True, write=False)
-    store_ahead = bs.MemoryStore(read=True,
-                                 write=True,
-                                 read_through_write=True)
-    read_through_write_store = bs.MemoryStore(read=True,
-                                              write=True,
-                                              read_through_write=True)
-    no_read_through_write_store = bs.MemoryStore(read=True,
-                                                 write=True,
-                                                 read_through_write=False)
+    store_ahead = bs.MemoryStore(read=True, write=True, read_through_write=True)
+    read_through_write_store = bs.MemoryStore(read=True, write=True, read_through_write=True)
+    no_read_through_write_store = bs.MemoryStore(read=True, write=True, read_through_write=False)
     stores = [
-        no_read_through_write_store, read_through_write_store, read_store,
-        store_ahead
+        no_read_through_write_store,
+        read_through_write_store,
+        read_store,
+        store_ahead,
     ]
     chained_store = bs.ChainedStore(stores)
 
@@ -194,12 +184,8 @@ def test_chained_read_through_write():
 
 def test_chained_writes_may_be_allowed_on_read_throughs_only():
     read_store = bs.MemoryStore({'foo': 42}, read=True, write=False)
-    read_through_write_only_store = bs.MemoryStore(read=True,
-                                                   write=False,
-                                                   read_through_write=True)
-    write_store = bs.MemoryStore(read=True,
-                                 write=True,
-                                 read_through_write=False)
+    read_through_write_only_store = bs.MemoryStore(read=True, write=False, read_through_write=True)
+    write_store = bs.MemoryStore(read=True, write=True, read_through_write=False)
     stores = [write_store, read_through_write_only_store, read_store]
     chained_store = bs.ChainedStore(stores)
 

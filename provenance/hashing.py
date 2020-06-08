@@ -42,6 +42,7 @@ class _ConsistentSet(object):
     """ Class used to ensure the hash of Sets is preserved
         whatever the order of its items.
     """
+
     def __init__(self, _set):
         # Forces order of elements in set to ensure consistent hash.
         self._type = type(_set)
@@ -59,6 +60,7 @@ class _ConsistentSet(object):
 
 class _MyHash(object):
     """ Class used to hash objects that won't normally pickle """
+
     def __init__(self, *args):
         self.args = args
 
@@ -67,6 +69,7 @@ class Hasher(Pickler):
     """ A subclass of pickler, to do cryptographic hashing, rather than
         pickling.
     """
+
     def __init__(self, hash_name='md5'):
         self.stream = io.BytesIO()
         # By default we want a pickle protocol that only changes with
@@ -80,7 +83,7 @@ class Hasher(Pickler):
         try:
             self.dump(obj)
         except pickle.PicklingError as e:
-            e.args += ('PicklingError while hashing %r: %r' % (obj, e), )
+            e.args += ('PicklingError while hashing %r: %r' % (obj, e),)
             raise
         dumps = self.stream.getvalue()
         self._hash.update(dumps)
@@ -155,8 +158,7 @@ class Hasher(Pickler):
         except TypeError:
             # If keys are unorderable, sorting them using their hash. This is
             # slower but works in any case.
-            Pickler._batch_setitems(
-                self, iter(sorted((hash(k), v) for k, v in items)))
+            Pickler._batch_setitems(self, iter(sorted((hash(k), v) for k, v in items)))
 
     def save_set(self, set_items):
         # forces order of items in Set to ensure consistent hash
@@ -169,6 +171,7 @@ class Hasher(Pickler):
 class NumpyHasher(Hasher):
     """ Special case the hasher for when numpy is loaded.
     """
+
     def __init__(self, hash_name='md5', coerce_mmap=True):
         """
             Parameters
@@ -204,16 +207,15 @@ class NumpyHasher(Hasher):
                 # in chunks
                 try:
                     copy = obj[:]
-                    copy.shape = (copy.size, )
+                    copy.shape = (copy.size,)
                 except AttributeError as e:
-                    if e.args[
-                            0] != 'incompatible shape for a non-contiguous array':
+                    if e.args[0] != 'incompatible shape for a non-contiguous array':
                         raise e
 
                     # TODO: I am punting here for now and do a reshape that will make
                     # a copy, but it could be possible to get the bytes out of obj
                     # without needing one
-                    copy = obj.reshape((obj.size, ))
+                    copy = obj.reshape((obj.size,))
 
                 i = 0
                 size = copy.size

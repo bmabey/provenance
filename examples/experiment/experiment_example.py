@@ -35,7 +35,12 @@ def gen_age():
 
 
 street_names = [
-    'Maple St', 'Corner Ave', 'West Helm Lp', '4th St', 'Main St', 'Center St'
+    'Maple St',
+    'Corner Ave',
+    'West Helm Lp',
+    '4th St',
+    'Main St',
+    'Center St',
 ]
 
 
@@ -74,9 +79,11 @@ def save_entry(id, name, age, address, matrix):
             name=id + '/demographic',
             delete_original=True,
         )
-        p.archive_file(os.path.join(directory, 'matrix.csv'),
-                       name=id + '/matrix',
-                       delete_original=True)
+        p.archive_file(
+            os.path.join(directory, 'matrix.csv'),
+            name=id + '/matrix',
+            delete_original=True,
+        )
 
     write_entry()
 
