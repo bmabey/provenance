@@ -6,7 +6,7 @@
 
 3.  Push new version bump commit and tag to github
 
-        git push master --tags
+        git push trunk --tags
 
 4.  Build source and wheel packages
 

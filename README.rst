@@ -8,7 +8,7 @@ provenance
 .. |version status| image:: https://img.shields.io/pypi/v/provenance.svg
    :target: https://pypi.python.org/pypi/provenance
    :alt: Version Status
-.. |build status| image:: https://travis-ci.org/bmabey/provenance.png?branch=master
+.. |build status| image:: https://travis-ci.org/bmabey/provenance.png?branch=trunk
    :target: https://travis-ci.org/bmabey/provenance
    :alt: Build Status
 .. |docs| image:: https://readthedocs.org/projects/provenance/badge/?version=latest
@@ -69,7 +69,7 @@ For an explanation of this example please see the `Introductory Guide`_.
     vis.visualize_lineage(result)
 
 
-.. image:: https://raw.githubusercontent.com/bmabey/provenance/master/docs/source/images/lineage_example.png
+.. image:: https://raw.githubusercontent.com/bmabey/provenance/trunk/docs/source/images/lineage_example.png
 
 
 .. _Introductory Guide: http://provenance.readthedocs.io/en/latest/intro-guide.html
