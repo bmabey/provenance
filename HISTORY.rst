@@ -3,6 +3,15 @@
 History
 =======
 
+
+0.14.0 (2020-10-22)
+------------
+
+Thanks to Anderson Banihirwe, @andersy005, for this release!
+
+* Updates joblib pin "joblib>=0.15.0" and related code.
+* Tests and code formatting improvements!
+
 0.13.0 (2019-12-02)
 ------------
 
